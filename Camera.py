@@ -1,19 +1,21 @@
 from fractions import Fraction
+from picamera import PiCamera
 from threading import Condition
 from threading import Thread
 from http import server
 from time import gmtime, strftime
+
+import datetime as dt
 
 import io
 import picamera
 import logging
 import socketserver
 import time
-import datetime
 import threading
 import os
 
-PAGE="""\
+PAGE = """\
 <html>
     <head>
         <title>Camera Surveillance</title>
@@ -43,6 +45,7 @@ savePath = "/output"
 location = "/home/pi/CameraSurveillance"
 os.chdir(location + savePath)
 
+
 ###########################
 
 class StreamingOutput(object):
@@ -62,6 +65,7 @@ class StreamingOutput(object):
             self.buffer.seek(0)
         return self.buffer.write(buf)
 
+
 class MyOutput(object):
     def __init__(self, filename, sock):
         self.output_file = io.open(filename, 'wb')
@@ -78,6 +82,7 @@ class MyOutput(object):
     def close(self):
         self.output_file.close()
         self.output_sock.close()
+
 
 class StreamingHandler(server.BaseHTTPRequestHandler):
     def do_GET(self):
@@ -110,7 +115,7 @@ class StreamingHandler(server.BaseHTTPRequestHandler):
                     self.end_headers()
                     self.wfile.write(frame)
                     self.wfile.write(b'\r\n')
-                
+
             except Exception as e:
                 logging.warning(
                     'Removed streaming client %s: %s',
@@ -118,6 +123,7 @@ class StreamingHandler(server.BaseHTTPRequestHandler):
         else:
             self.send_error(404)
             self.end_headers()
+
 
 class StreamingServer(socketserver.ThreadingMixIn, server.HTTPServer):
     allow_reuse_address = True
@@ -131,6 +137,7 @@ def runServer():
     finally:
         camera.stop_recording()
 
+
 with picamera.PiCamera(resolution='640x480', framerate=cameraFrameRate) as camera:
     output = StreamingOutput()
     camera.exposure_mode = exposureSetting
@@ -142,16 +149,45 @@ with picamera.PiCamera(resolution='640x480', framerate=cameraFrameRate) as camer
     while True:
         files = sorted(os.listdir(os.getcwd()), key=os.path.getmtime)
 
-        if(len(files) > maxVideos):
-            os.remove(files[0]) # deleting the oldest
+        if (len(files) > maxVideos):
+            os.remove(files[0])  # deleting the oldest
 
-        time = strftime("%d-%m-%Y_%H-%M-%S", gmtime())
-        camera.start_recording(time + ".h264")
-        camera.wait_recording(seconds)
-        camera.stop_recording()
+        timeStamp = strftime("%Y-%m-%d_%H-%M-%S", gmtime())
+
+        camera.start_recording(timeStamp + ".h264")
+
+        start = dt.datetime.now()
+        startMili = int(dt.datetime.now().strftime("%s")) * 1000
+        while True:
+            camera.annotate_background = picamera.Color('black')
+            camera.annotate_text_size = 20
+            camera.annotate_text = dt.datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+            camera.wait_recording(0.1)
+
+            currentMili = int(dt.datetime.now().strftime("%s")) * 1000
+
+            if ((currentMili - startMili) > (seconds * 1000)):
+                print("Restarting")
+                startMili = int(dt.datetime.now().strftime("%s")) * 1000
+
+                timeStamp = strftime("%Y-%m-%d_%H-%M-%S", gmtime())
+
+                camera.stop_recording()
+                time.sleep(1)
+
+                camera.start_recording(timeStamp + ".h264")
+
+                camera.annotate_background = picamera.Color('black')
+                camera.annotate_text_size = 20
+                camera.annotate_text = dt.datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+                camera.wait_recording(0.1)
 
 
-   
+
+
+
+
+
 
 
 
