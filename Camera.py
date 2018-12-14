@@ -36,7 +36,7 @@ cameraFrameRate = 5
 ip = ""
 port = 8000
 
-maxVideos = 48
+maxVideos = 72
 
 minutes = 60
 seconds = minutes * 60
@@ -147,11 +147,6 @@ with picamera.PiCamera(resolution='640x480', framerate=cameraFrameRate) as camer
     serverThread.start()
 
     while True:
-        files = sorted(os.listdir(os.getcwd()), key=os.path.getmtime)
-
-        if (len(files) > maxVideos):
-            os.remove(files[0])  # deleting the oldest
-
         timeStamp = strftime("%Y-%m-%d_%H-%M-%S", gmtime())
 
         camera.start_recording(timeStamp + ".h264")
@@ -159,6 +154,11 @@ with picamera.PiCamera(resolution='640x480', framerate=cameraFrameRate) as camer
         start = dt.datetime.now()
         startMili = int(dt.datetime.now().strftime("%s")) * 1000
         while True:
+            # Removing files if over the limit
+            files = sorted(os.listdir(os.getcwd()), key=os.path.getmtime)
+            if (len(files) > maxVideos):
+                os.system('rm -rf /home/pi/CameraSurveillance/output/' + files[0])
+
             camera.annotate_background = picamera.Color('black')
             camera.annotate_text_size = 20
             camera.annotate_text = dt.datetime.now().strftime('%Y-%m-%d %H:%M:%S')
