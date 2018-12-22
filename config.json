@@ -1,0 +1,47 @@
+{
+  "ip": "",
+  "port": 8000,
+  "location": "London",
+  "minutes": 60,
+  "max_videos": 72,
+  "main_location": "/home/pi/CameraSurveillance",
+  "save_path": "/output",
+  "solar_depression": "civil",
+  "text_settings": {
+    "text_size": 20,
+    "background_color": "black",
+    "text_color": "white"
+  },
+  "drive_settings": {
+    "max_videos": 72
+  },
+  "settings": {
+    "morning": {
+      "contrast": 50,
+      "brightness": 50,
+      "framerate": 24,
+      "awb_mode": "sunlight",
+      "exposure_mode": "off",
+      "image_effect": "saturation",
+      "resolution": "640x480"
+    },
+    "afternoon": {
+      "contrast": 50,
+      "brightness": 67,
+      "framerate": 24,
+      "awb_mode": "incandescent",
+      "exposure_mode": "off",
+      "image_effect": "saturation",
+      "resolution": "640x480"
+    },
+    "night": {
+      "contrast": 80,
+      "brightness": 72,
+      "framerate": 12,
+      "awb_mode": "fluorescent",
+      "exposure_mode": "night",
+      "image_effect": "none",
+      "resolution": "640x480"
+    }
+  }
+}

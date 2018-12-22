@@ -4,9 +4,12 @@ from threading import Condition
 from threading import Thread
 from http import server
 from time import gmtime, strftime
+from astral import Astral
 
 import datetime as dt
 
+import json
+import astral
 import io
 import picamera
 import logging
@@ -21,32 +24,42 @@ PAGE = """\
         <title>Camera Surveillance</title>
     </head>
     <body>
-        <img src="stream.mjpg" width="640" height="480" />
+        <img src="stream.mjpg" />
     </body>
 </html>
 """
 
+
 ###########################
-######## Settings #########
+# SETTINGS
 ###########################
 
-exposureSetting = "night"
-cameraFrameRate = 5
+with open('/home/pi/CameraSurveillance/config.json') as data_file:
+    data = json.load(data_file)
 
-ip = ""
-port = 8000
+ip = data["ip"]
+port = data["port"]
+maxVideos = data["max_videos"]
+settings = data["settings"]
+minutes = data["minutes"]
+seconds = minutes * 60  # Converting to sections
 
-maxVideos = 72
+settingSelection = "morning"
 
-minutes = 60
-seconds = minutes * 60
-
-savePath = "/output"
-location = "/home/pi/CameraSurveillance"
+savePath = data["save_path"]
+location = data["main_location"]
 os.chdir(location + savePath)
 
+###########################
+# ASTRAL SETUP
+###########################
+
+geo = Astral().geocoder
+Astral().solar_depression = data["solar_depression"]
+city = Astral()[data["location"]]
 
 ###########################
+
 
 class StreamingOutput(object):
     def __init__(self):
@@ -138,62 +151,96 @@ def runServer():
         camera.stop_recording()
 
 
-with picamera.PiCamera(resolution='640x480', framerate=cameraFrameRate) as camera:
-    output = StreamingOutput()
-    camera.exposure_mode = exposureSetting
-    camera.start_recording(output, format='mjpeg', splitter_port=2)
+def checkSun(selection):
+    oldSelection = selection
+    currentDate = dt.datetime.today().strftime('%Y %m %d').split()
 
+    s = dt.datetime.today().strftime('%Y %m %d  %H:%M:%S')
+    currentTime = dt.datetime.strptime(s, "%Y %m %d  %H:%M:%S")
+
+    sun = city.sun(date=dt.date(int(currentDate[0]), int(currentDate[1]), int(currentDate[2])), local=True)
+    print(currentTime.hour)
+    print(sun["sunset"].hour)
+    # Currently disabled due to high sun exposure..
+    if selection != "night" and (sun["sunset"].hour < currentTime.hour < 23) or (currentTime.hour < sun["sunrise"].hour):
+        selection = "night"
+
+    elif selection != "morning" and sun["sunrise"].hour < currentTime.hour < 12:
+        selection = "morning"
+
+    elif selection != "afternoon" and 12 <= currentTime.hour < sun["sunset"].hour:
+        selection = "afternoon"
+
+    if selection != oldSelection:
+        print(str(currentTime) + "   -   Switching to: " + selection)
+    return [selection != oldSelection, selection]  # Don't do anything
+
+
+with picamera.PiCamera() as camera:
+    output = StreamingOutput()
+
+    resp = checkSun(settingSelection)
+
+    selectedSetting = settings[resp[1]]
+    camera.resolution = selectedSetting["resolution"]
+    camera.contrast = selectedSetting["contrast"]
+    camera.brightness = selectedSetting["brightness"]
+    camera.framerate = selectedSetting["framerate"]
+    camera.awb_mode = selectedSetting["awb_mode"]
+    camera.exposure_mode = selectedSetting["exposure_mode"]
+    camera.image_effect = selectedSetting["image_effect"]
+
+    camera.start_recording(output, format='mjpeg', splitter_port=2)
     serverThread = threading.Thread(name='runServer', target=runServer)
     serverThread.start()
 
+    timeStamp = strftime("%Y-%m-%d_%H-%M-%S", gmtime())
+
+    camera.start_recording(timeStamp + ".h264")
+
+    start = dt.datetime.now()
+    startMili = int(dt.datetime.now().strftime("%s")) * 1000
     while True:
-        timeStamp = strftime("%Y-%m-%d_%H-%M-%S", gmtime())
+        # Removing files if over the limit
+        files = sorted(os.listdir(os.getcwd()), key=os.path.getmtime)
+        if len(files) > maxVideos:
+            os.system('rm -rf /home/pi/CameraSurveillance/output/' + files[0])
 
-        camera.start_recording(timeStamp + ".h264")
+        camera.annotate_background = picamera.Color(data["text_settings"]["background_color"])
+        camera.annotate_foreground = picamera.Color(data["text_settings"]["text_color"])
+        camera.annotate_text_size = data["text_settings"]["text_size"]
+        camera.annotate_text = dt.datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+        camera.wait_recording(0.1)
 
-        start = dt.datetime.now()
-        startMili = int(dt.datetime.now().strftime("%s")) * 1000
-        while True:
-            # Removing files if over the limit
-            files = sorted(os.listdir(os.getcwd()), key=os.path.getmtime)
-            if (len(files) > maxVideos):
-                os.system('rm -rf /home/pi/CameraSurveillance/output/' + files[0])
+        currentMili = int(dt.datetime.now().strftime("%s")) * 1000
 
-            camera.annotate_background = picamera.Color('black')
-            camera.annotate_text_size = 20
-            camera.annotate_text = dt.datetime.now().strftime('%Y-%m-%d %H:%M:%S')
-            camera.wait_recording(0.1)
-
-            currentMili = int(dt.datetime.now().strftime("%s")) * 1000
-
-            if ((currentMili - startMili) > (seconds * 1000)):
+        if (currentMili - startMili) > (seconds * 1000):
+            camera.stop_recording()
+            resp = checkSun(selectedSetting)
+            if resp[0]:
                 print("Restarting")
                 startMili = int(dt.datetime.now().strftime("%s")) * 1000
-
                 timeStamp = strftime("%Y-%m-%d_%H-%M-%S", gmtime())
 
-                camera.stop_recording()
-                time.sleep(1)
+                camera.stop_recording(splitter_port=2)
 
-                camera.start_recording(timeStamp + ".h264")
+                selectedSetting = settings[resp[1]]
+                camera.resolution = selectedSetting["resolution"]
+                camera.contrast = selectedSetting["contrast"]
+                camera.brightness = selectedSetting["brightness"]
+                camera.framerate = selectedSetting["framerate"]
+                camera.awb_mode = selectedSetting["awb_mode"]
+                camera.exposure_mode = selectedSetting["exposure_mode"]
+                camera.image_effect = selectedSetting["image_effect"]
 
-                camera.annotate_background = picamera.Color('black')
-                camera.annotate_text_size = 20
-                camera.annotate_text = dt.datetime.now().strftime('%Y-%m-%d %H:%M:%S')
-                camera.wait_recording(0.1)
+            time.sleep(1)
 
+            camera.start_recording(timeStamp + ".h264")
+            if resp[0]:
+                camera.start_recording(output, format='mjpeg', splitter_port=2)
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+            camera.annotate_background = picamera.Color(data["text_settings"]["background_color"])
+            camera.annotate_foreground = picamera.Color(data["text_settings"]["text_color"])
+            camera.annotate_text_size = data["text_settings"]["text_size"]
+            camera.annotate_text = dt.datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+            camera.wait_recording(0.1)
