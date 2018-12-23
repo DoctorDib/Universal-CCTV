@@ -18,9 +18,14 @@ import time
 import threading
 import os
 
-PAGE = """\
+###########################
+# PAGES
+###########################
+
+HOME = """\
 <html>
     <head>
+        <link rel="icon" href="/home/pi/CameraSurveillance/pic/webcam.png">
         <title>Camera Surveillance</title>
     </head>
     <body>
@@ -29,6 +34,17 @@ PAGE = """\
 </html>
 """
 
+ERROR = """\
+<html>
+    <head>
+        <link rel="icon" href="/home/pi/CameraSurveillance/pic/webcam.png">
+        <title>Nice try...</title>
+    </head>
+    <body>
+        <h1> Well you tried, I guess...</h1>
+    </body>
+</html>
+"""
 
 ###########################
 # SETTINGS
@@ -44,7 +60,7 @@ settings = data["settings"]
 minutes = data["minutes"]
 seconds = minutes * 60  # Converting to sections
 
-settingSelection = "morning"
+settingSelection = "night -x"
 
 savePath = data["save_path"]
 location = data["main_location"]
@@ -79,24 +95,6 @@ class StreamingOutput(object):
         return self.buffer.write(buf)
 
 
-class MyOutput(object):
-    def __init__(self, filename, sock):
-        self.output_file = io.open(filename, 'wb')
-        self.output_sock = sock.makefile('wb')
-
-    def write(self, buf):
-        self.output_file.write(buf)
-        self.output_sock.write(buf)
-
-    def flush(self):
-        self.output_file.flush()
-        self.output_sock.flush()
-
-    def close(self):
-        self.output_file.close()
-        self.output_sock.close()
-
-
 class StreamingHandler(server.BaseHTTPRequestHandler):
     def do_GET(self):
         if self.path == '/':
@@ -104,7 +102,7 @@ class StreamingHandler(server.BaseHTTPRequestHandler):
             self.send_header('Location', '/index.html')
             self.end_headers()
         elif self.path == '/index.html':
-            content = PAGE.encode('utf-8')
+            content = HOME.encode('utf-8')
             self.send_response(200)
             self.send_header('Content-Type', 'text/html')
             self.send_header('Content-Length', len(content))
@@ -134,8 +132,12 @@ class StreamingHandler(server.BaseHTTPRequestHandler):
                     'Removed streaming client %s: %s',
                     self.client_address, str(e))
         else:
-            self.send_error(404)
+            content = ERROR.encode('utf-8')
+            self.send_response(404)
+            self.send_header('Content-Type', 'text/html')
+            self.send_header('Content-Length', len(content))
             self.end_headers()
+            self.wfile.write(content)
 
 
 class StreamingServer(socketserver.ThreadingMixIn, server.HTTPServer):
@@ -157,10 +159,9 @@ def checkSun(selection):
 
     s = dt.datetime.today().strftime('%Y %m %d  %H:%M:%S')
     currentTime = dt.datetime.strptime(s, "%Y %m %d  %H:%M:%S")
-
     sun = city.sun(date=dt.date(int(currentDate[0]), int(currentDate[1]), int(currentDate[2])), local=True)
     # Currently disabled due to high sun exposure..
-    if selection != "night" and (sun["sunset"].hour < currentTime.hour < 23) or (currentTime.hour < sun["sunrise"].hour):
+    if selection != "night" and (sun["sunset"].hour < currentTime.hour < 24) or (currentTime.hour < sun["sunrise"].hour):
         selection = "night"
 
     elif selection != "morning" and sun["sunrise"].hour < currentTime.hour < 12:
@@ -175,11 +176,21 @@ def checkSun(selection):
 
 
 with picamera.PiCamera() as camera:
+    fixedMode = False
+
     output = StreamingOutput()
 
-    resp = checkSun(settingSelection)
+    settingSelection = settingSelection.split(" ")
+    if(len(settingSelection) >= 2):
+        # FIXED MODE - Sticks only to one setting
+        fixedMode = True
+        selectedSetting = settings[settingSelection[0]]
+    else:
+        # NORMAL MODE - Cycles through day time
+        resp = checkSun(settingSelection[0])
+        selectedSetting = settings[resp[1]]
 
-    selectedSetting = settings[resp[1]]
+
     camera.resolution = selectedSetting["resolution"]
     camera.contrast = selectedSetting["contrast"]
     camera.brightness = selectedSetting["brightness"]
@@ -215,7 +226,7 @@ with picamera.PiCamera() as camera:
         if (currentMili - startMili) > (seconds * 1000):
             camera.stop_recording()
             resp = checkSun(selectedSetting)
-            if resp[0]:
+            if resp[0] and not fixedMode:
                 print("Restarting")
                 startMili = int(dt.datetime.now().strftime("%s")) * 1000
                 timeStamp = strftime("%Y-%m-%d_%H-%M-%S", gmtime())
@@ -234,7 +245,7 @@ with picamera.PiCamera() as camera:
             time.sleep(1)
 
             camera.start_recording(timeStamp + ".h264")
-            if resp[0]:
+            if resp[0] and not fixedMode:
                 camera.start_recording(output, format='mjpeg', splitter_port=2)
 
             camera.annotate_background = picamera.Color(data["text_settings"]["background_color"])
