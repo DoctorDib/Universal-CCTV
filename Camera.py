@@ -17,6 +17,10 @@ import socketserver
 import time
 import threading
 import os
+import sys
+
+with open(os.path.abspath(os.path.split(sys.argv[0])[0]) + '/config.json') as data_file:
+    data = json.load(data_file)
 
 ###########################
 # PAGES
@@ -25,7 +29,7 @@ import os
 HOME = """\
 <html>
     <head>
-        <link rel="icon" href="/home/pi/CameraSurveillance/pic/webcam.png">
+        <link rel="icon" href='"""+data["main_location"]+"""/pic/webcam.png'>
         <title>Camera Surveillance</title>
     </head>
     <body>
@@ -37,7 +41,6 @@ HOME = """\
 ERROR = """\
 <html>
     <head>
-        <link rel="icon" href="/home/pi/CameraSurveillance/pic/webcam.png">
         <title>Nice try...</title>
     </head>
     <body>
@@ -50,9 +53,6 @@ ERROR = """\
 # SETTINGS
 ###########################
 
-with open('/home/pi/CameraSurveillance/config.json') as data_file:
-    data = json.load(data_file)
-
 ip = data["ip"]
 port = data["port"]
 maxVideos = data["max_videos"]
@@ -60,11 +60,13 @@ settings = data["settings"]
 minutes = data["minutes"]
 seconds = minutes * 60  # Converting to sections
 
-settingSelection = "night -x"
+settingSelection = "night"
 
 savePath = data["save_path"]
 location = data["main_location"]
 os.chdir(location + savePath)
+
+currentMode = ""
 
 ###########################
 # ASTRAL SETUP
@@ -161,19 +163,27 @@ def checkSun(selection):
     currentTime = dt.datetime.strptime(s, "%Y %m %d  %H:%M:%S")
     sun = city.sun(date=dt.date(int(currentDate[0]), int(currentDate[1]), int(currentDate[2])), local=True)
     # Currently disabled due to high sun exposure..
-    if selection != "night" and (sun["sunset"].hour < currentTime.hour < 24) or (currentTime.hour < sun["sunrise"].hour):
+    if selection != "night" and ((sun["sunset"].hour - 1 < currentTime.hour < 24) or (currentTime.hour < sun["sunrise"].hour - 1)):
         selection = "night"
 
-    elif selection != "morning" and sun["sunrise"].hour < currentTime.hour < 12:
+    elif selection != "morning" and sun["sunrise"].hour - 1 < currentTime.hour < 12:
         selection = "morning"
 
-    elif selection != "afternoon" and 12 <= currentTime.hour < sun["sunset"].hour:
+    elif selection != "afternoon" and 12 <= currentTime.hour < sun["sunset"].hour - 1:
         selection = "afternoon"
 
     if selection != oldSelection:
         print(str(currentTime) + "   -   Switching to: " + selection)
     return [selection != oldSelection, selection]  # Don't do anything
 
+def grabTextMode (mode):
+    if (mode == 'night'):
+    elif (mode == 'morning'):
+    elif (mode == 'afternoon'):
+    else:
+        currentMode = "Fail"
+
+    return currentMode
 
 with picamera.PiCamera() as camera:
     fixedMode = False
@@ -189,7 +199,6 @@ with picamera.PiCamera() as camera:
         # NORMAL MODE - Cycles through day time
         resp = checkSun(settingSelection[0])
         selectedSetting = settings[resp[1]]
-
 
     camera.resolution = selectedSetting["resolution"]
     camera.contrast = selectedSetting["contrast"]
@@ -213,12 +222,12 @@ with picamera.PiCamera() as camera:
         # Removing files if over the limit
         files = sorted(os.listdir(os.getcwd()), key=os.path.getmtime)
         if len(files) > maxVideos:
-            os.system('rm -rf /home/pi/CameraSurveillance/output/' + files[0])
+            os.system('rm -rf ' + data["main_location"] + '/output/' + files[0])
 
         camera.annotate_background = picamera.Color(data["text_settings"]["background_color"])
         camera.annotate_foreground = picamera.Color(data["text_settings"]["text_color"])
         camera.annotate_text_size = data["text_settings"]["text_size"]
-        camera.annotate_text = dt.datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+        camera.annotate_text = grabTextMode(resp[1]) + " - " + dt.datetime.now().strftime('%Y-%m-%d %H:%M:%S')
         camera.wait_recording(0.1)
 
         currentMili = int(dt.datetime.now().strftime("%s")) * 1000
@@ -234,6 +243,7 @@ with picamera.PiCamera() as camera:
                 camera.stop_recording(splitter_port=2)
 
                 selectedSetting = settings[resp[1]]
+
                 camera.resolution = selectedSetting["resolution"]
                 camera.contrast = selectedSetting["contrast"]
                 camera.brightness = selectedSetting["brightness"]
@@ -251,5 +261,5 @@ with picamera.PiCamera() as camera:
             camera.annotate_background = picamera.Color(data["text_settings"]["background_color"])
             camera.annotate_foreground = picamera.Color(data["text_settings"]["text_color"])
             camera.annotate_text_size = data["text_settings"]["text_size"]
-            camera.annotate_text = dt.datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+            camera.annotate_text = grabTextMode(resp[1]) + " - " + dt.datetime.now().strftime('%Y-%m-%d %H:%M:%S')
             camera.wait_recording(0.1)
