@@ -178,8 +178,11 @@ def checkSun(selection):
 
 def grabTextMode (mode):
     if (mode == 'night'):
+        currentMode = "Night"
     elif (mode == 'morning'):
+        currentMode = "Morning"
     elif (mode == 'afternoon'):
+        currentMode = "Afternoon"
     else:
         currentMode = "Fail"
 
