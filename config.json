@@ -31,14 +31,14 @@
       "framerate": 24,
       "awb_mode": "auto",
       "exposure_mode": "off",
-      "image_effect": "auto",
+      "image_effect": "none",
       "resolution": "640x480"
     },
     "night": {
       "contrast": 80,
       "brightness": 72,
       "framerate": 12,
-      "awb_mode": "fluorescent",
+      "awb_mode": "auto",
       "exposure_mode": "night",
       "image_effect": "none",
       "resolution": "640x480"

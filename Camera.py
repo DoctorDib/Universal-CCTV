@@ -29,11 +29,11 @@ with open(os.path.abspath(os.path.split(sys.argv[0])[0]) + '/config.json') as da
 HOME = """\
 <html>
     <head>
-        <link rel="icon" href='"""+data["main_location"]+"""/pic/webcam.png'>
+        <link rel="icon" href='""" + data["main_location"] + """/pic/webcam.png'>
         <title>Camera Surveillance</title>
         <script>
             let seconds = 30;
-            
+
             function changeBackground() {
                 let date = new Date(), hours = date.getHours();
                 if (hours > 18 || hours < 6) {
@@ -44,7 +44,7 @@ HOME = """\
                     document.querySelector('body').style.background = "#dedede";
                 }
             }
-        
+
             window.onload = function(){
                 changeBackground(); // initial
                 setInterval(changeBackground, seconds*1000);
@@ -94,6 +94,7 @@ currentMode = ""
 geo = Astral().geocoder
 Astral().solar_depression = data["solar_depression"]
 city = Astral()[data["location"]]
+
 
 ###########################
 
@@ -182,16 +183,21 @@ def checkSun(selection):
     currentTime = dt.datetime.strptime(s, "%Y %m %d  %H:%M:%S")
     sun = city.sun(date=dt.date(int(currentDate[0]), int(currentDate[1]), int(currentDate[2])), local=True)
     # Currently disabled due to high sun exposure..
-    if selection != "night" and ((sun["sunset"].hour - 1 < currentTime.hour < 24) or (currentTime.hour < sun["sunrise"].hour - 1)):
+    print(sun["sunset"].hour - 1 < currentTime.hour < 24)
+    print(currentTime.hour < sun["sunrise"].hour - 1)
+
+    if selection != "night" and (
+        (sun["sunset"].hour - 1 < currentTime.hour < 24) or (currentTime.hour < sun["sunrise"].hour - 1)):
         selection = "night"
-    else:
+    elif selection != "day" and (sun["sunrise"].hour - 1 < currentTime.hour < sun["sunset"].hour - 1):
         selection = "day"
 
     if selection != oldSelection:
         print(str(currentTime) + "   -   Switching to: " + selection)
     return [selection != oldSelection, selection]  # Don't do anything
 
-def grabTextMode (mode):
+
+def grabTextMode(mode):
     if (mode == 'night'):
         currentMode = "Night"
     elif (mode == 'day'):
@@ -201,13 +207,14 @@ def grabTextMode (mode):
 
     return currentMode
 
+
 with picamera.PiCamera() as camera:
     fixedMode = False
 
     output = StreamingOutput()
 
     settingSelection = settingSelection.split(" ")
-    if(len(settingSelection) >= 2):
+    if (len(settingSelection) >= 2):
         # FIXED MODE - Sticks only to one setting
         fixedMode = True
         selectedSetting = settings[settingSelection[0]]
