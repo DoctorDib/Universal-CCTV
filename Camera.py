@@ -31,9 +31,28 @@ HOME = """\
     <head>
         <link rel="icon" href='"""+data["main_location"]+"""/pic/webcam.png'>
         <title>Camera Surveillance</title>
+        <script>
+            let seconds = 30;
+            
+            function changeBackground() {
+                let date = new Date(), hours = date.getHours();
+                if (hours > 18 || hours < 6) {
+                    // Night time
+                    document.querySelector('body').style.background = "#252525";
+                } else {
+                    // Day time
+                    document.querySelector('body').style.background = "#dedede";
+                }
+            }
+        
+            window.onload = function(){
+                changeBackground(); // initial
+                setInterval(changeBackground, seconds*1000);
+            };
+        </script>
     </head>
     <body>
-        <img src="stream.mjpg" />
+        <div style="width:200px; height:200px; background-color:grey"></div>
     </body>
 </html>
 """
@@ -165,12 +184,8 @@ def checkSun(selection):
     # Currently disabled due to high sun exposure..
     if selection != "night" and ((sun["sunset"].hour - 1 < currentTime.hour < 24) or (currentTime.hour < sun["sunrise"].hour - 1)):
         selection = "night"
-
-    elif selection != "morning" and sun["sunrise"].hour - 1 < currentTime.hour < 12:
-        selection = "morning"
-
-    elif selection != "afternoon" and 12 <= currentTime.hour < sun["sunset"].hour - 1:
-        selection = "afternoon"
+    else:
+        selection = "day"
 
     if selection != oldSelection:
         print(str(currentTime) + "   -   Switching to: " + selection)
@@ -179,10 +194,8 @@ def checkSun(selection):
 def grabTextMode (mode):
     if (mode == 'night'):
         currentMode = "Night"
-    elif (mode == 'morning'):
-        currentMode = "Morning"
-    elif (mode == 'afternoon'):
-        currentMode = "Afternoon"
+    elif (mode == 'day'):
+        currentMode = "Day"
     else:
         currentMode = "Fail"
 

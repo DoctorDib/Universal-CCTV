@@ -4,7 +4,7 @@
   "location": "London",
   "minutes": 60,
   "max_videos": 72,
-  "main_location": "/home/pi/CameraSurveillance",
+  "main_location": "/home/pi/PiSecurityCamera",
   "save_path": "/output",
   "solar_depression": "civil",
   "text_settings": {
@@ -26,6 +26,15 @@
       "resolution": "640x480"
     },
     "afternoon": {
+      "contrast": 50,
+      "brightness": 67,
+      "framerate": 24,
+      "awb_mode": "incandescent",
+      "exposure_mode": "off",
+      "image_effect": "saturation",
+      "resolution": "640x480"
+    },
+    "day": {
       "contrast": 50,
       "brightness": 67,
       "framerate": 24,
