@@ -14,10 +14,10 @@ I came to the conclusion that I need to make some CCTV for my motorbike, to cove
 What I used
 ------
 Hardware:
- - Respberry Pi 3 b+
+ - Raspberry Pi 3 b+
  - 30GB SD card
  - Raspberry Pi Camera Module (first version)
- - Raspberry Pi Camera Fisheye Wide Angle Night Vision Camera Module (current version)
+ - Raspberry Pi Camera Fish eye Wide Angle Night Vision Camera Module (current version)
 
 Software: 
  - Raspbian Stretch with desktop
