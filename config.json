@@ -25,22 +25,13 @@
       "image_effect": "saturation",
       "resolution": "640x480"
     },
-    "afternoon": {
-      "contrast": 50,
-      "brightness": 67,
-      "framerate": 24,
-      "awb_mode": "incandescent",
-      "exposure_mode": "off",
-      "image_effect": "saturation",
-      "resolution": "640x480"
-    },
     "day": {
       "contrast": 50,
       "brightness": 67,
       "framerate": 24,
-      "awb_mode": "incandescent",
+      "awb_mode": "auto",
       "exposure_mode": "off",
-      "image_effect": "saturation",
+      "image_effect": "auto",
       "resolution": "640x480"
     },
     "night": {
