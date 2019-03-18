@@ -183,11 +183,7 @@ def checkSun(selection):
     currentTime = dt.datetime.strptime(s, "%Y %m %d  %H:%M:%S")
     sun = city.sun(date=dt.date(int(currentDate[0]), int(currentDate[1]), int(currentDate[2])), local=True)
     # Currently disabled due to high sun exposure..
-    print(sun["sunset"].hour - 1 < currentTime.hour < 24)
-    print(currentTime.hour < sun["sunrise"].hour - 1)
-
-    if selection != "night" and (
-        (sun["sunset"].hour - 1 < currentTime.hour < 24) or (currentTime.hour < sun["sunrise"].hour - 1)):
+    if selection != "night" and ((sun["sunset"].hour - 1 < currentTime.hour < 24) or (currentTime.hour < sun["sunrise"].hour - 1)):
         selection = "night"
     elif selection != "day" and (sun["sunrise"].hour - 1 < currentTime.hour < sun["sunset"].hour - 1):
         selection = "day"
