@@ -51,8 +51,8 @@ HOME = """\
             };
         </script>
     </head>
-    <body>
-        <div style="width:200px; height:200px; background-color:grey"></div>
+    <body style="overflow:hidden;">
+        <img style="width:100%;" src="stream.mjpg" />
     </body>
 </html>
 """
