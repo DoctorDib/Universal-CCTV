@@ -1,2 +1,4 @@
 *.xml
 .idea/PiSecurityCamera.iml
+
+/__pycache__/*

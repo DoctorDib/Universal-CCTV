@@ -1,47 +1,52 @@
 {
-  "ip": "",
-  "port": 8000,
-  "location": "London",
-  "minutes": 60,
-  "max_videos": 72,
-  "main_location": "/home/pi/PiSecurityCamera",
-  "save_path": "/output",
-  "solar_depression": "civil",
-  "text_settings": {
-    "text_size": 20,
-    "background_color": "black",
-    "text_color": "white"
-  },
-  "drive_settings": {
-    "max_videos": 72
-  },
-  "settings": {
-    "morning": {
-      "contrast": 50,
-      "brightness": 50,
-      "framerate": 24,
-      "awb_mode": "sunlight",
-      "exposure_mode": "off",
-      "image_effect": "saturation",
-      "resolution": "640x480"
+    "version": "2.0",
+
+    "ip": "",
+    "port": 8000,
+    "location": "London",
+    "minutes": 60,
+    "max_videos": 72,
+    "main_location": "home\\pi\\Camera",
+    "save_path": "\\output",
+    "solar_depression": "civil",
+    
+    "text_settings": {
+        "text_size": 20,
+        "background_color": "black",
+        "text_color": "white"
     },
-    "day": {
-      "contrast": 50,
-      "brightness": 67,
-      "framerate": 24,
-      "awb_mode": "auto",
-      "exposure_mode": "off",
-      "image_effect": "none",
-      "resolution": "640x480"
+
+    "drive_settings": {
+        "max_videos": 72
     },
-    "night": {
-      "contrast": 80,
-      "brightness": 72,
-      "framerate": 12,
-      "awb_mode": "auto",
-      "exposure_mode": "night",
-      "image_effect": "none",
-      "resolution": "640x480"
+
+    "settings": {
+        "morning": {
+            "contrast": 50,
+            "brightness": 50,
+            "framerate": 24,
+            "awb_mode": "sunlight",
+            "exposure_mode": "off",
+            "image_effect": "saturation",
+            "resolution": "640x480"
+        },
+        "day": {
+            "contrast": 50,
+            "brightness": 67,
+            "framerate": 24,
+            "awb_mode": "auto",
+            "exposure_mode": "off",
+            "image_effect": "none",
+            "resolution": "640x480"
+        },
+        "night": {
+            "contrast": 80,
+            "brightness": 72,
+            "framerate": 12,
+            "awb_mode": "auto",
+            "exposure_mode": "night",
+            "image_effect": "none",
+            "resolution": "640x480"
+        }
     }
-  }
 }

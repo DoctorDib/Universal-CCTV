@@ -1,85 +1,35 @@
-from fractions import Fraction
-from picamera import PiCamera
-from threading import Condition
-from threading import Thread
-from http import server
+from Streaming import StreamingHandler, StreamingOutput, StreamingServer
+
 from time import gmtime, strftime
 from astral import Astral
 
 import datetime as dt
 
 import json
-import astral
-import io
-import picamera
-import logging
-import socketserver
 import time
 import threading
 import os
 import sys
 
+try:
+    # Using Raspbery Pi... hopefully
+    from picamera import PiCamera
+except ImportError:
+    # If on Windows, use a substitute library
+    from PiCameraStub import PiCameraStub as PiCamera
+
+
+# Read JSON content from config file
 with open(os.path.abspath(os.path.split(sys.argv[0])[0]) + '/config.json') as data_file:
     data = json.load(data_file)
-
-###########################
-# PAGES
-###########################
-
-HOME = """\
-<html>
-    <head>
-        <link rel="icon" href='""" + data["main_location"] + """/pic/webcam.png'>
-        <title>Camera Surveillance</title>
-        <script>
-            let seconds = 30;
-
-            function changeBackground() {
-                let date = new Date(), hours = date.getHours();
-                if (hours > 18 || hours < 6) {
-                    // Night time
-                    document.querySelector('body').style.background = "#252525";
-                } else {
-                    // Day time
-                    document.querySelector('body').style.background = "#dedede";
-                }
-            }
-
-            window.onload = function(){
-                changeBackground(); // initial
-                setInterval(changeBackground, seconds*1000);
-            };
-        </script>
-    </head>
-    <body style="overflow:hidden;">
-        <img style="width:100%;" src="stream.mjpg" />
-    </body>
-</html>
-"""
-
-ERROR = """\
-<html>
-    <head>
-        <title>Nice try...</title>
-    </head>
-    <body>
-        <h1> Well you tried, I guess...</h1>
-    </body>
-</html>
-"""
 
 ###########################
 # SETTINGS
 ###########################
 
-ip = data["ip"]
-port = data["port"]
-maxVideos = data["max_videos"]
 settings = data["settings"]
-minutes = data["minutes"]
-seconds = minutes * 60  # Converting to sections
 
-settingSelection = "night"
+max_duration_limit_seconds = data["minutes"] * 60  # Converting to sections
 
 savePath = data["save_path"]
 location = data["main_location"]
@@ -87,198 +37,180 @@ os.chdir(location + savePath)
 
 currentMode = ""
 
-###########################
-# ASTRAL SETUP
-###########################
-
-geo = Astral().geocoder
-Astral().solar_depression = data["solar_depression"]
-city = Astral()[data["location"]]
-
-
-###########################
-
-
-class StreamingOutput(object):
+class Helper():
     def __init__(self):
-        self.frame = None
-        self.buffer = io.BytesIO()
-        self.condition = Condition()
+        self.geo = Astral().geocoder
+        Astral().solar_depression = data["solar_depression"]
+        self.city = Astral()[data["location"]]
 
-    def write(self, buf):
-        if buf.startswith(b'\xff\xd8'):
-            # New frame, copy the existing buffer's content and notify all
-            # clients it's available
-            self.buffer.truncate()
-            with self.condition:
-                self.frame = self.buffer.getvalue()
-                self.condition.notify_all()
-            self.buffer.seek(0)
-        return self.buffer.write(buf)
+    def checkSun(self, selection):
+        oldSelection = selection
+        currentDate = dt.datetime.today().strftime('%Y %m %d').split()
 
+        s = dt.datetime.today().strftime('%Y %m %d  %H:%M:%S')
+        currentTime = dt.datetime.strptime(s, "%Y %m %d  %H:%M:%S")
+        sun = self.city.sun(date=dt.date(int(currentDate[0]), int(currentDate[1]), int(currentDate[2])), local=True)
+        # Currently disabled due to high sun exposure..
+        if selection != "night" and ((sun["sunset"].hour - 1 < currentTime.hour < 24) or (currentTime.hour < sun["sunrise"].hour - 1)):
+            selection = "night"
+        elif selection != "day" and (sun["sunrise"].hour - 1 < currentTime.hour < sun["sunset"].hour - 1):
+            selection = "day"
 
-class StreamingHandler(server.BaseHTTPRequestHandler):
-    def do_GET(self):
-        if self.path == '/':
-            self.send_response(301)
-            self.send_header('Location', '/index.html')
-            self.end_headers()
-        elif self.path == '/index.html':
-            content = HOME.encode('utf-8')
-            self.send_response(200)
-            self.send_header('Content-Type', 'text/html')
-            self.send_header('Content-Length', len(content))
-            self.end_headers()
-            self.wfile.write(content)
-        elif self.path == '/stream.mjpg':
-            self.send_response(200)
-            self.send_header('Age', 0)
-            self.send_header('Cache-Control', 'no-cache, private')
-            self.send_header('Pragma', 'no-cache')
-            self.send_header('Content-Type', 'multipart/x-mixed-replace; boundary=FRAME')
-            self.end_headers()
-            try:
-                while True:
-                    with output.condition:
-                        output.condition.wait()
-                        frame = output.frame
-                    self.wfile.write(b'--FRAME\r\n')
-                    self.send_header('Content-Type', 'image/jpeg')
-                    self.send_header('Content-Length', len(frame))
-                    self.end_headers()
-                    self.wfile.write(frame)
-                    self.wfile.write(b'\r\n')
+        if selection != oldSelection:
+            print(str(currentTime) + "   -   Switching to: " + selection)
 
-            except Exception as e:
-                logging.warning(
-                    'Removed streaming client %s: %s',
-                    self.client_address, str(e))
+        return [selection != oldSelection, selection]  # Don't do anything
+
+    def grabTextMode(self, mode):
+        if (mode == 'night'):
+            currentMode = "Night"
+        elif (mode == 'day'):
+            currentMode = "Day"
         else:
-            content = ERROR.encode('utf-8')
-            self.send_response(404)
-            self.send_header('Content-Type', 'text/html')
-            self.send_header('Content-Length', len(content))
-            self.end_headers()
-            self.wfile.write(content)
+            currentMode = "Fail"
 
-
-class StreamingServer(socketserver.ThreadingMixIn, server.HTTPServer):
-    allow_reuse_address = True
-    daemon_threads = True
-
-
-def runServer():
-    try:
-        server = StreamingServer((ip, port), StreamingHandler)
-        server.serve_forever()
-    finally:
-        camera.stop_recording()
-
-
-def checkSun(selection):
-    oldSelection = selection
-    currentDate = dt.datetime.today().strftime('%Y %m %d').split()
-
-    s = dt.datetime.today().strftime('%Y %m %d  %H:%M:%S')
-    currentTime = dt.datetime.strptime(s, "%Y %m %d  %H:%M:%S")
-    sun = city.sun(date=dt.date(int(currentDate[0]), int(currentDate[1]), int(currentDate[2])), local=True)
-    # Currently disabled due to high sun exposure..
-    if selection != "night" and ((sun["sunset"].hour - 1 < currentTime.hour < 24) or (currentTime.hour < sun["sunrise"].hour - 1)):
-        selection = "night"
-    elif selection != "day" and (sun["sunrise"].hour - 1 < currentTime.hour < sun["sunset"].hour - 1):
-        selection = "day"
-
-    if selection != oldSelection:
-        print(str(currentTime) + "   -   Switching to: " + selection)
-    return [selection != oldSelection, selection]  # Don't do anything
-
-
-def grabTextMode(mode):
-    if (mode == 'night'):
-        currentMode = "Night"
-    elif (mode == 'day'):
-        currentMode = "Day"
-    else:
-        currentMode = "Fail"
-
-    return currentMode
-
-
-with picamera.PiCamera() as camera:
-    fixedMode = False
-
-    output = StreamingOutput()
-
-    settingSelection = settingSelection.split(" ")
-    if (len(settingSelection) >= 2):
-        # FIXED MODE - Sticks only to one setting
-        fixedMode = True
-        selectedSetting = settings[settingSelection[0]]
-    else:
-        # NORMAL MODE - Cycles through day time
-        resp = checkSun(settingSelection[0])
-        selectedSetting = settings[resp[1]]
-
-    camera.resolution = selectedSetting["resolution"]
-    camera.contrast = selectedSetting["contrast"]
-    camera.brightness = selectedSetting["brightness"]
-    camera.framerate = selectedSetting["framerate"]
-    camera.awb_mode = selectedSetting["awb_mode"]
-    camera.exposure_mode = selectedSetting["exposure_mode"]
-    camera.image_effect = selectedSetting["image_effect"]
-
-    camera.start_recording(output, format='mjpeg', splitter_port=2)
-    serverThread = threading.Thread(name='runServer', target=runServer)
-    serverThread.start()
-
-    timeStamp = strftime("%Y-%m-%d_%H-%M-%S", gmtime())
-
-    camera.start_recording(timeStamp + ".h264")
-
-    start = dt.datetime.now()
-    startMili = int(dt.datetime.now().strftime("%s")) * 1000
-    while True:
+        return currentMode
+    
+class FileManager():
+    def files_limit_check(self):
         # Removing files if over the limit
         files = sorted(os.listdir(os.getcwd()), key=os.path.getmtime)
-        if len(files) > maxVideos:
-            os.system('rm -rf ' + data["main_location"] + '/output/' + files[0])
+        if len(files) > data["max_videos"]:
+            os.system('rm -rf ' + data["main_location"] + data["save_path"] + '/' + files[0])
 
-        camera.annotate_background = picamera.Color(data["text_settings"]["background_color"])
-        camera.annotate_foreground = picamera.Color(data["text_settings"]["text_color"])
-        camera.annotate_text_size = data["text_settings"]["text_size"]
-        camera.annotate_text = grabTextMode(resp[1]) + " - " + dt.datetime.now().strftime('%Y-%m-%d %H:%M:%S')
-        camera.wait_recording(0.1)
+class Camera():
+    should_tick = False
+    settingSelection = ""
+    is_running = True
 
-        currentMili = int(dt.datetime.now().strftime("%s")) * 1000
+    def __init__(self, fixed_mode = False):
+        self.fixed_mode = fixed_mode
 
-        if (currentMili - startMili) > (seconds * 1000):
-            camera.stop_recording()
-            resp = checkSun(selectedSetting)
-            if resp[0] and not fixedMode:
-                print("Restarting")
-                startMili = int(dt.datetime.now().strftime("%s")) * 1000
-                timeStamp = strftime("%Y-%m-%d_%H-%M-%S", gmtime())
+        self.helper = Helper()
+        self.output = StreamingOutput()
+        self.file_manager = FileManager()
 
-                camera.stop_recording(splitter_port=2)
+        self.streaming_handler = StreamingHandler
+        self.streaming_handler.output = self.output  # Set output_instance as a class attribute
+        self.streaming_handler.is_running = self.is_running  # Set output_instance as a class attribute
 
-                selectedSetting = settings[resp[1]]
+        # Camera
+        self.camera = PiCamera()
+        self.__set_up_camera()
+        
+    # STEP 1
+    def __set_up_camera(self):
+        # Selecting the settings
+        settingSelection = self.settingSelection.split(" ")
+        if (len(settingSelection) >= 2):
+            # FIXED MODE - Sticks only to one setting
+            self.fixed_mode = True
+            self.selected_setting = data["settings"][settingSelection[0]]
+        else:
+            # NORMAL MODE - Cycles through day time
+            resp = self.helper.checkSun(settingSelection[0])
+            self.is_new_selection = resp[0]
+            self.selection = resp[1]
+            self.selected_setting = data["settings"][self.selection]
+        
+        self.camera.resolution = self.selected_setting["resolution"]
+        self.camera.contrast = self.selected_setting["contrast"]
+        self.camera.brightness = self.selected_setting["brightness"]
+        self.camera.framerate = self.selected_setting["framerate"]
+        self.camera.awb_mode = self.selected_setting["awb_mode"]
+        self.camera.exposure_mode = self.selected_setting["exposure_mode"]
+        self.camera.image_effect = self.selected_setting["image_effect"]
 
-                camera.resolution = selectedSetting["resolution"]
-                camera.contrast = selectedSetting["contrast"]
-                camera.brightness = selectedSetting["brightness"]
-                camera.framerate = selectedSetting["framerate"]
-                camera.awb_mode = selectedSetting["awb_mode"]
-                camera.exposure_mode = selectedSetting["exposure_mode"]
-                camera.image_effect = selectedSetting["image_effect"]
+        try:
+            self.camera.annotate_background = picamera.Color(data["text_settings"]["background_color"])
+            self.camera.annotate_foreground = picamera.Color(data["text_settings"]["text_color"])
+        except:
+            # On Windows 
+            print("Using windows machine, PiCamera module not avaliable")
 
-            time.sleep(1)
+        self.camera.annotate_text_size = data["text_settings"]["text_size"]
 
-            camera.start_recording(timeStamp + ".h264")
-            if resp[0] and not fixedMode:
-                camera.start_recording(output, format='mjpeg', splitter_port=2)
+    # STEP 2
+    def initialise_camera(self):
+        version = data["version"]
+        print(f"Initialising {version}")
 
-            camera.annotate_background = picamera.Color(data["text_settings"]["background_color"])
-            camera.annotate_foreground = picamera.Color(data["text_settings"]["text_color"])
-            camera.annotate_text_size = data["text_settings"]["text_size"]
-            camera.annotate_text = grabTextMode(resp[1]) + " - " + dt.datetime.now().strftime('%Y-%m-%d %H:%M:%S')
-            camera.wait_recording(0.1)
+        self.is_running = True
+
+        self.__start_recording()
+        self.__start_web_server()
+
+        # Tick away for ever
+        while(self.is_running):
+            # Only tick if active
+            if (self.should_tick):
+                self.__tick()
+
+    def shutdown(self):
+        self.__stop_recording()
+
+    # STEP 3
+    def __start_recording(self):
+        timeStamp = strftime("%Y-%m-%d_%H-%M-%S", gmtime())
+
+        self.camera.start_recording(timeStamp + ".h264") # it was h264]
+        print(self.is_new_selection)
+        print(self.fixed_mode)
+        if self.is_new_selection and not self.fixed_mode:
+            self.camera.start_recording(self.output, format='mjpeg', splitter_port=2)
+
+        self.start_duration = int(dt.datetime.now().timestamp() * 1000)
+        # Start should
+        self.should_tick = True
+    
+    # STEP 4
+    def __start_web_server(self):
+        self.serverThread = threading.Thread(name='runServer', target=self.__run_server)
+        self.serverThread.start()
+    # STEP 4.1
+    def __run_server(self):
+        try:
+            # Pass the StreamingOutput instance to StreamingHandler
+            self.server = StreamingServer((data["ip"], data["port"]), self.streaming_handler)
+            self.server.serve_forever()
+        except KeyboardInterrupt:
+            print("KeyboardInterrupt: Stopping the server.")
+            self._kill()
+        finally:
+            self.__stop_recording()
+
+    # STEP 5.1
+    def __stop_recording(self):
+        self.is_running = False
+        self.should_tick = False
+        self.camera.stop_recording()
+        if self.is_new_selection and not self.fixed_mode:
+            self.camera.stop_recording(splitter_port=2)
+
+    # STEP 5
+    def __tick(self):
+        try:
+            # Ensure we have not hit the file limit        
+            self.file_manager.files_limit_check()
+            # Setting timer text        
+            self.camera.annotate_text = self.helper.grabTextMode(self.selection) + " - " + dt.datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+            # camera timeout
+            self.camera.wait_recording(0.1)
+
+            current_duration = int(dt.datetime.now().timestamp() * 1000)
+
+            if (current_duration - self.start_duration) > (max_duration_limit_seconds * 1000):
+                self.__stop_recording()
+                self.__set_up_camera()
+                # Giving it time to catch up and set up camera
+                time.sleep(1)
+                self.__start_recording()
+        except KeyboardInterrupt:
+            print("KeyboardInterrupt: Stopping the camera and exiting.")
+            self._kill()
+
+    def _kill(self):
+        self.__stop_recording()
+        self.is_running = False
+        self.should_tick = False
+        os._exit(0)

@@ -1,0 +1,28 @@
+<html>
+    <head>
+        <link rel="icon" href='""" + data["main_location"] + """/pic/webcam.png'>
+        <title>Camera Surveillance</title>
+        <script>
+            let seconds = 30;
+
+            function changeBackground() {
+                let date = new Date(), hours = date.getHours();
+                if (hours > 18 || hours < 6) {
+                    // Night time
+                    document.querySelector('body').style.background = "#252525";
+                } else {
+                    // Day time
+                    document.querySelector('body').style.background = "#dedede";
+                }
+            }
+
+            window.onload = function(){
+                changeBackground(); // initial
+                setInterval(changeBackground, seconds*1000);
+            };
+        </script>
+    </head>
+    <body style="overflow:hidden;">
+        <img style="width:100%;" src="stream.mjpg" />
+    </body>
+</html>
