@@ -1,21 +1,33 @@
 from flask import Flask, jsonify
 from Camera import Camera
+from Servo import Servo
 import threading
 
-camera_thread = Camera()
-camera_init_thread = None
+camera_thread : Camera = Camera()
+# camera_init_thread = None
+
+servo_thread : Servo = Servo(11)
+# servo_init_thread = None
 
 app = Flask(__name__)
+
+# eleven = Servo(11)
 
 def start_camera_init_thread():
     global camera_init_thread
     camera_init_thread = threading.Thread(target=camera_thread.initialise_camera)
     camera_init_thread.start()
 
-def response(has_success, description = ""):
+def start_servo_init_thread():
+    global servo_init_thread
+    servo_init_thread = threading.Thread(target=servo_thread.setup)
+    servo_init_thread.start()
+
+def response(has_success, description="", data={}):
     return jsonify({
         "success": has_success, 
-        "description": description
+        "description": description,
+        "data": data,
     })
 
 @app.route('/ping')
@@ -33,6 +45,7 @@ def start_camera():
         return response(False, "Camera already running")
 
     start_camera_init_thread()
+    start_servo_init_thread()
     
     return response(True, "Camera initialization started")
 
@@ -50,5 +63,20 @@ def stop_camera():
 
     return response(True, "Camera has stopped")
 
+@app.get('/move/<int:percentage>')
+def ser_servo(percentage):
+    try:
+        servo_thread.move(percentage)
+    except Exception as e:
+        print(e)
+    return response(True, f"Moved to: {percentage}")
+
+@app.get('/get_position')
+def get_servo_position():
+    return response(True, data={ "position": servo_thread.current_position })
+
 if __name__ == '__main__':
-    app.run()
+    start_camera_init_thread()
+    start_servo_init_thread()
+    
+    app.run(host='0.0.0.0')

@@ -1,13 +1,13 @@
 {
-    "version": "2.0",
+    "version": "2.1",
 
     "ip": "",
     "port": 8000,
     "location": "London",
     "minutes": 60,
     "max_videos": 72,
-    "main_location": "home\\pi\\Camera",
-    "save_path": "\\output",
+    "main_location": "/home/james/Camera",
+    "save_path": "/output",
     "solar_depression": "civil",
     
     "text_settings": {

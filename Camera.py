@@ -50,10 +50,13 @@ class Helper():
         s = dt.datetime.today().strftime('%Y %m %d  %H:%M:%S')
         currentTime = dt.datetime.strptime(s, "%Y %m %d  %H:%M:%S")
         sun = self.city.sun(date=dt.date(int(currentDate[0]), int(currentDate[1]), int(currentDate[2])), local=True)
-        # Currently disabled due to high sun exposure..
-        if selection != "night" and ((sun["sunset"].hour - 1 < currentTime.hour < 24) or (currentTime.hour < sun["sunrise"].hour - 1)):
+
+        sunrise_hour = sun["sunrise"].hour - 1
+        sunset_hour = sun["sunset"].hour - 1
+
+        if selection != "night" and ((sunset_hour <= currentTime.hour < 24) or (currentTime.hour <= sunrise_hour)):
             selection = "night"
-        elif selection != "day" and (sun["sunrise"].hour - 1 < currentTime.hour < sun["sunset"].hour - 1):
+        elif selection != "day" and (sunrise_hour <= currentTime.hour < sunset_hour):
             selection = "day"
 
         if selection != oldSelection:
@@ -63,13 +66,11 @@ class Helper():
 
     def grabTextMode(self, mode):
         if (mode == 'night'):
-            currentMode = "Night"
+            return "Night"
         elif (mode == 'day'):
-            currentMode = "Day"
+            return "Day"
         else:
-            currentMode = "Fail"
-
-        return currentMode
+            return "Fail"
     
 class FileManager():
     def files_limit_check(self):
@@ -111,6 +112,7 @@ class Camera():
             resp = self.helper.checkSun(settingSelection[0])
             self.is_new_selection = resp[0]
             self.selection = resp[1]
+
             self.selected_setting = data["settings"][self.selection]
         
         self.camera.resolution = self.selected_setting["resolution"]
@@ -154,8 +156,6 @@ class Camera():
         timeStamp = strftime("%Y-%m-%d_%H-%M-%S", gmtime())
 
         self.camera.start_recording(timeStamp + ".h264") # it was h264]
-        print(self.is_new_selection)
-        print(self.fixed_mode)
         if self.is_new_selection and not self.fixed_mode:
             self.camera.start_recording(self.output, format='mjpeg', splitter_port=2)
 
