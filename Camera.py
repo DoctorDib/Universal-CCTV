@@ -34,7 +34,7 @@ max_duration_limit_seconds = data["minutes"] * 60  # Converting to sections
 
 savePath = data["save_path"]
 location = data["main_location"]
-os.chdir(location + savePath)
+# os.chdir(location + savePath)
 
 currentMode = ""
 
@@ -157,7 +157,7 @@ class Camera():
     def __start_recording(self):
         timeStamp = strftime("%Y-%m-%d_%H-%M-%S", gmtime())
 
-        self.camera.start_recording(timeStamp + ".h264") # it was h264]
+        self.camera.start_recording(location + savePath + timeStamp + ".h264") # it was h264]
         if self.is_new_selection and not self.fixed_mode:
             self.camera.start_recording(self.output, format='mjpeg', splitter_port=2)
 

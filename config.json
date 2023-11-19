@@ -6,7 +6,7 @@
     "location": "London",
     "minutes": 60,
     "max_videos": 72,
-    "main_location": "/home/james/Camera",
+    "main_location": "/home/james/PiSecurityCamera",
     "save_path": "/output",
     "solar_depression": "civil",
     
