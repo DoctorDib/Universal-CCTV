@@ -1,6 +1,5 @@
 *.xml
 .idea/PiSecurityCamera.iml
 /Client/node_modules
-/Client/build
 
 /__pycache__/*
