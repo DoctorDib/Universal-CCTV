@@ -1,4 +1,5 @@
 from Streaming import StreamingHandler, StreamingOutput, StreamingServer
+from flask import Response
 
 from time import gmtime, strftime, sleep
 from astral import Astral
@@ -85,6 +86,18 @@ class Camera():
     settingSelection = ""
     is_running = True
 
+    def generate_frames(self):
+        while self.is_running:
+            with self.output.condition:
+                self.output.condition.wait()
+                frame = self.output.frame
+            yield (b'--FRAME\r\n'
+                   b'Content-Type: image/jpeg\r\n\r\n' + frame + b'\r\n')
+
+    def flask_stream(self):
+        return Response(self.generate_frames(), mimetype='multipart/x-mixed-replace; boundary=FRAME')
+
+
     def __init__(self, fixed_mode = False):
         self.fixed_mode = fixed_mode
 
@@ -157,7 +170,7 @@ class Camera():
     def __start_recording(self):
         timeStamp = strftime("%Y-%m-%d_%H-%M-%S", gmtime())
 
-        self.camera.start_recording(location + savePath + timeStamp + ".h264") # it was h264]
+        self.camera.start_recording(location + savePath + '/' + timeStamp + ".h264") # it was h264]
         if self.is_new_selection and not self.fixed_mode:
             self.camera.start_recording(self.output, format='mjpeg', splitter_port=2)
 
