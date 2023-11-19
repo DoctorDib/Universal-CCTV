@@ -75,6 +75,7 @@ def ser_servo(percentage):
 def get_servo_position():
     return response(True, data={ "position": servo_thread.current_position })
 
+# Initial start
 if __name__ == '__main__':
     start_camera_init_thread()
     start_servo_init_thread()

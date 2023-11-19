@@ -1,6 +1,6 @@
 from Streaming import StreamingHandler, StreamingOutput, StreamingServer
 
-from time import gmtime, strftime
+from time import gmtime, strftime, sleep
 from astral import Astral
 
 import datetime as dt
@@ -15,6 +15,7 @@ try:
     # Using Raspbery Pi... hopefully
     from picamera import PiCamera
 except ImportError:
+    print("IMPORT ERROR, NOT BEING RAN ON RASPBERRY PI")
     # If on Windows, use a substitute library
     from PiCameraStub import PiCameraStub as PiCamera
 
@@ -128,7 +129,7 @@ class Camera():
             self.camera.annotate_foreground = picamera.Color(data["text_settings"]["text_color"])
         except:
             # On Windows 
-            print("Using windows machine, PiCamera module not avaliable")
+            print("ERROR: Using windows machine, PiCamera module not avaliable")
 
         self.camera.annotate_text_size = data["text_settings"]["text_size"]
 
@@ -181,7 +182,6 @@ class Camera():
 
     # STEP 5.1
     def __stop_recording(self):
-        self.is_running = False
         self.should_tick = False
         self.camera.stop_recording()
         if self.is_new_selection and not self.fixed_mode:
@@ -201,10 +201,11 @@ class Camera():
 
             if (current_duration - self.start_duration) > (max_duration_limit_seconds * 1000):
                 self.__stop_recording()
+                sleep(.5) # Waiting for camera to fully shutdown
                 self.__set_up_camera()
                 # Giving it time to catch up and set up camera
-                time.sleep(1)
-                self.__start_recording()
+                sleep(.5)
+                self.initialise_camera()
         except KeyboardInterrupt:
             print("KeyboardInterrupt: Stopping the camera and exiting.")
             self._kill()
