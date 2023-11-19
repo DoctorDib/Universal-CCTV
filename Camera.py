@@ -6,7 +6,6 @@ from astral import Astral
 import datetime as dt
 
 import json
-import time
 import threading
 import os
 import sys
@@ -14,6 +13,7 @@ import sys
 try:
     # Using Raspbery Pi... hopefully
     from picamera import PiCamera
+    import picamera as pc
 except ImportError:
     print("IMPORT ERROR, NOT BEING RAN ON RASPBERRY PI")
     # If on Windows, use a substitute library
@@ -125,8 +125,8 @@ class Camera():
         self.camera.image_effect = self.selected_setting["image_effect"]
 
         try:
-            self.camera.annotate_background = PiCamera.Color(data["text_settings"]["background_color"])
-            self.camera.annotate_foreground = PiCamera.Color(data["text_settings"]["text_color"])
+            self.camera.annotate_background = pc.Color(data["text_settings"]["background_color"])
+            self.camera.annotate_foreground = pc.Color(data["text_settings"]["text_color"])
         except Exception as e:
             # On Windows 
             print("ERROR: Using windows machine, PiCamera module not avaliable")

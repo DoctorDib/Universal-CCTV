@@ -1,7 +1,11 @@
-from flask import Flask, jsonify
+from flask import Flask, jsonify, render_template, send_from_directory
+
 from Camera import Camera
 from Servo import Servo
+from Config import Config
+
 import threading
+import os
 
 camera_thread : Camera = Camera()
 # camera_init_thread = None
@@ -39,6 +43,8 @@ def heart_beat():
     success = camera_thread.is_running
     return response(success, "Alive and beating" if success else "Dead")
 
+## CAMERA API
+
 @app.get('/start')
 def start_camera():
     if camera_thread.is_running:
@@ -63,6 +69,8 @@ def stop_camera():
 
     return response(True, "Camera has stopped")
 
+## SERVO API
+
 @app.get('/move/<int:percentage>')
 def ser_servo(percentage):
     try:
@@ -75,8 +83,43 @@ def ser_servo(percentage):
 def get_servo_position():
     return response(True, data={ "position": servo_thread.current_position })
 
+## FILE MANAGER API
+
+@app.get('/get_files')
+def get_files():
+    output_directory = Config().get_output_path()
+    file_list = os.listdir(output_directory)
+    return response(True, data={ "files": file_list })
+
+@app.route('/videos')
+def index():
+    output_directory = Config().get_output_path()
+    file_list = os.listdir(output_directory)
+    print(os.getcwd())
+    print("============")
+    print("============")
+    print("============")
+    print("============")
+    print("============")
+    print("============")
+    # return True
+    return render_template('./main.html', files=file_list)
+
+@app.route('/download/<filename>')
+def download_video(filename):
+    output_directory = Config().get_output_path()
+    return send_from_directory(output_directory, filename)
+
+@app.route('/video/<filename>')
+def view_video(filename):
+    output_directory = Config().get_output_path()
+    video_path = os.path.join(output_directory, filename)
+    return render_template('video.html', video_path=video_path)
+
 # Initial start
 if __name__ == '__main__':
+    os.chdir('/home/james/PiSecurityCamera')
+
     start_camera_init_thread()
     start_servo_init_thread()
     
