@@ -125,11 +125,12 @@ class Camera():
         self.camera.image_effect = self.selected_setting["image_effect"]
 
         try:
-            self.camera.annotate_background = picamera.Color(data["text_settings"]["background_color"])
-            self.camera.annotate_foreground = picamera.Color(data["text_settings"]["text_color"])
-        except:
+            self.camera.annotate_background = PiCamera.Color(data["text_settings"]["background_color"])
+            self.camera.annotate_foreground = PiCamera.Color(data["text_settings"]["text_color"])
+        except Exception as e:
             # On Windows 
             print("ERROR: Using windows machine, PiCamera module not avaliable")
+            print(f"More Info: {e}")
 
         self.camera.annotate_text_size = data["text_settings"]["text_size"]
 
