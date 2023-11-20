@@ -22,31 +22,53 @@
 
     "settings": {
         "morning": {
-            "contrast": 50,
-            "brightness": 50,
+            "resolution": "640X480",
             "framerate": 24,
             "awb_mode": "sunlight",
-            "exposure_mode": "off",
-            "image_effect": "saturation",
-            "resolution": "640x480"
+            "exposure_mode": "auto",
+            "brightness": 50,
+            "contrast": 50,
+            "saturation": -35,
+            "sharpness": 50,
+            "image_effect": "none",
+            "iso": 100,
+            "meter_mode": "average",
+            "video_stabilization": false,
+            "sensor_mode": 0,
+            "rotation": 0
         },
         "day": {
-            "contrast": 50,
-            "brightness": 67,
+            "resolution": "640X480",
             "framerate": 24,
             "awb_mode": "auto",
-            "exposure_mode": "off",
+            "exposure_mode": "auto",
+            "brightness": 60,
+            "contrast": 45,
+            "saturation": -35,
+            "sharpness": 50,
             "image_effect": "none",
-            "resolution": "640x480"
+            "iso": 100,
+            "meter_mode": "average",
+            "video_stabilization": false,
+            "sensor_mode": 0,
+            "rotation": 0
         },
         "night": {
-            "contrast": 80,
-            "brightness": 72,
+
+            "resolution": "640X480",
             "framerate": 12,
             "awb_mode": "auto",
             "exposure_mode": "night",
+            "brightness": 72,
+            "contrast": 80,
+            "saturation": -35,
+            "sharpness": 50,
             "image_effect": "none",
-            "resolution": "640x480"
+            "iso": 800,
+            "meter_mode": "average",
+            "video_stabilization": false,
+            "sensor_mode": 0,
+            "rotation": 0
         }
     }
 }

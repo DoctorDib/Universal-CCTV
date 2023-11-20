@@ -1,3 +1,4 @@
+from Config import Config
 from Streaming import StreamingHandler, StreamingOutput, StreamingServer
 from flask import Response
 
@@ -5,11 +6,8 @@ from time import gmtime, strftime, sleep
 from astral import Astral
 
 import datetime as dt
-
-import json
 import threading
 import os
-import sys
 
 try:
     # Using Raspbery Pi... hopefully
@@ -20,30 +18,22 @@ except ImportError:
     # If on Windows, use a substitute library
     from PiCameraStub import PiCameraStub as PiCamera
 
-
-# Read JSON content from config file
-with open(os.path.abspath(os.path.split(sys.argv[0])[0]) + '/config.json') as data_file:
-    data = json.load(data_file)
-
 ###########################
 # SETTINGS
 ###########################
 
-settings = data["settings"]
+# max_duration_limit_seconds = data["minutes"] * 60  # Converting to sections
 
-max_duration_limit_seconds = data["minutes"] * 60  # Converting to sections
-
-savePath = data["save_path"]
-location = data["main_location"]
 # os.chdir(location + savePath)
 
 currentMode = ""
 
 class Helper():
     def __init__(self):
+        self.config = Config()
         self.geo = Astral().geocoder
-        Astral().solar_depression = data["solar_depression"]
-        self.city = Astral()[data["location"]]
+        Astral().solar_depression = self.config.get('solar_depression')
+        self.city = Astral()[self.config.get('location')]
 
     def checkSun(self, selection):
         oldSelection = selection
@@ -75,11 +65,14 @@ class Helper():
             return "Fail"
     
 class FileManager():
+    def __init__(self):
+        self.config = Config()
+
     def files_limit_check(self):
         # Removing files if over the limit
         files = sorted(os.listdir(os.getcwd()), key=os.path.getmtime)
-        if len(files) > data["max_videos"]:
-            os.system('rm -rf ' + data["main_location"] + data["save_path"] + '/' + files[0])
+        if len(files) > self.config.get('max_videos'):
+            os.system('rm -rf ' + self.config.get('main_location') + self.config.get('save_path') + '/' + files[0])
 
 class Camera():
     should_tick = False
@@ -97,10 +90,10 @@ class Camera():
     def flask_stream(self):
         return Response(self.generate_frames(), mimetype='multipart/x-mixed-replace; boundary=FRAME')
 
-
     def __init__(self, fixed_mode = False):
         self.fixed_mode = fixed_mode
 
+        self.config = Config()
         self.helper = Helper()
         self.output = StreamingOutput()
         self.file_manager = FileManager()
@@ -112,6 +105,7 @@ class Camera():
         # Camera
         self.camera = PiCamera()
         self.__set_up_camera()
+        self.__start_web_server()
         
     # STEP 1
     def __set_up_camera(self):
@@ -120,43 +114,49 @@ class Camera():
         if (len(settingSelection) >= 2):
             # FIXED MODE - Sticks only to one setting
             self.fixed_mode = True
-            self.selected_setting = data["settings"][settingSelection[0]]
+            self.selected_setting = self.config.get('settings')[settingSelection[0]]
         else:
             # NORMAL MODE - Cycles through day time
             resp = self.helper.checkSun(settingSelection[0])
             self.is_new_selection = resp[0]
             self.selection = resp[1]
 
-            self.selected_setting = data["settings"][self.selection]
+            self.selected_setting = self.config.get('settings')[self.selection]
         
         self.camera.resolution = self.selected_setting["resolution"]
-        self.camera.contrast = self.selected_setting["contrast"]
-        self.camera.brightness = self.selected_setting["brightness"]
         self.camera.framerate = self.selected_setting["framerate"]
         self.camera.awb_mode = self.selected_setting["awb_mode"]
         self.camera.exposure_mode = self.selected_setting["exposure_mode"]
+        self.camera.brightness = self.selected_setting["brightness"]
+        self.camera.contrast = self.selected_setting["contrast"]
+        self.camera.saturation = self.selected_setting["saturation"]
+        self.camera.sharpness = self.selected_setting["sharpness"]
         self.camera.image_effect = self.selected_setting["image_effect"]
+        self.camera.iso = self.selected_setting["iso"]
+        self.camera.meter_mode = self.selected_setting["meter_mode"]
+        self.camera.video_stabilization = self.selected_setting["video_stabilization"]
+        self.camera.sensor_mode = self.selected_setting["sensor_mode"]
+        self.camera.rotation = self.selected_setting["rotation"]
 
         try:
-            self.camera.annotate_background = pc.Color(data["text_settings"]["background_color"])
-            self.camera.annotate_foreground = pc.Color(data["text_settings"]["text_color"])
+            self.camera.annotate_background = pc.Color(self.config.get('text_settings')["background_color"])
+            self.camera.annotate_foreground = pc.Color(self.config.get('text_settings')["text_color"])
         except Exception as e:
             # On Windows 
             print("ERROR: Using windows machine, PiCamera module not avaliable")
             print(f"More Info: {e}")
 
-        self.camera.annotate_text_size = data["text_settings"]["text_size"]
+        self.camera.annotate_text_size = self.config.get('text_settings')["text_size"]
 
     # STEP 2
     def initialise_camera(self):
-        version = data["version"]
+        version = self.config.get('version')
         print(f"Initialising {version}")
 
         self.is_running = True
 
         self.__start_recording()
-        self.__start_web_server()
-
+        
         # Tick away for ever
         while(self.is_running):
             # Only tick if active
@@ -166,11 +166,19 @@ class Camera():
     def shutdown(self):
         self.__stop_recording()
 
+    def restart(self):
+        self.__stop_recording()
+        sleep(.5) # Waiting for camera to fully shutdown
+        self.__set_up_camera()
+        # Giving it time to catch up and set up camera
+        sleep(.5)
+        self.initialise_camera()
+
     # STEP 3
     def __start_recording(self):
         timeStamp = strftime("%Y-%m-%d_%H-%M-%S", gmtime())
 
-        self.camera.start_recording(location + savePath + '/' + timeStamp + ".h264") # it was h264]
+        self.camera.start_recording(self.config.get_output_path() + '/' + timeStamp + ".h264") # it was h264]
         if self.is_new_selection and not self.fixed_mode:
             self.camera.start_recording(self.output, format='mjpeg', splitter_port=2)
 
@@ -186,7 +194,7 @@ class Camera():
     def __run_server(self):
         try:
             # Pass the StreamingOutput instance to StreamingHandler
-            self.server = StreamingServer((data["ip"], data["port"]), self.streaming_handler)
+            self.server = StreamingServer((self.config.get('ip'), self.config.get('port')), self.streaming_handler)
             self.server.serve_forever()
         except KeyboardInterrupt:
             print("KeyboardInterrupt: Stopping the server.")
@@ -197,9 +205,20 @@ class Camera():
     # STEP 5.1
     def __stop_recording(self):
         self.should_tick = False
-        self.camera.stop_recording()
-        if self.is_new_selection and not self.fixed_mode:
-            self.camera.stop_recording(splitter_port=2)
+        self.is_running = False
+
+        try:
+            self.camera.stop_recording()
+        except Exception as e:
+            print("Error when closing camera on Port 1")
+            print(e)
+        
+        try:
+            if self.is_new_selection and not self.fixed_mode:
+                self.camera.stop_recording(splitter_port=2)
+        except Exception as e:
+            print("Error when closing camera on Port 1")
+            print(e)
 
     # STEP 5
     def __tick(self):
@@ -213,13 +232,8 @@ class Camera():
 
             current_duration = int(dt.datetime.now().timestamp() * 1000)
 
-            if (current_duration - self.start_duration) > (max_duration_limit_seconds * 1000):
-                self.__stop_recording()
-                sleep(.5) # Waiting for camera to fully shutdown
-                self.__set_up_camera()
-                # Giving it time to catch up and set up camera
-                sleep(.5)
-                self.initialise_camera()
+            if (current_duration - self.start_duration) > ((self.config.get('minutes') * 60) * 1000):
+                self.restart()
         except KeyboardInterrupt:
             print("KeyboardInterrupt: Stopping the camera and exiting.")
             self._kill()

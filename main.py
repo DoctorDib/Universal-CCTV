@@ -1,19 +1,22 @@
 from flask import Flask, jsonify, render_template, send_from_directory
+from flask_cors import CORS
 
 from Camera import Camera
 from Servo import Servo
 from Config import Config
 
+import subprocess
+import os.path
+from time import sleep
+
 import threading
 import os
 
 camera_thread : Camera = Camera()
-# camera_init_thread = None
-
 servo_thread : Servo = Servo(11)
-# servo_init_thread = None
 
 app = Flask(__name__)
+CORS(app)
 
 # eleven = Servo(11)
 
@@ -64,6 +67,14 @@ def start_camera():
     
     return response(True, "Camera initialization started")
 
+@app.get('/restart')
+def restart_camera():
+    stop_camera()
+    sleep(0.5)
+    print("starting camera")
+    start_camera_init_thread()
+    return response(True, "Camera restarted")
+
 @app.get('/stop')
 def stop_camera():
     if not camera_thread.is_running:
@@ -72,10 +83,12 @@ def stop_camera():
     # Stop the camera initialization thread gracefully
     camera_thread.shutdown()
 
+    print("Shutting down camera thread")
     global camera_init_thread
     if camera_init_thread:
         camera_init_thread.join()  # Wait for the camera_init_thread to finish
 
+    print("Fin shutting down")
     return response(True, "Camera has stopped")
 
 ## SERVO API
@@ -92,6 +105,10 @@ def ser_servo(percentage):
 def get_servo_position():
     return response(True, data={ "position": servo_thread.current_position })
 
+@app.get('/get_percentage')
+def get_servo_position_percentage():
+    return response(True, data={ "position": servo_thread.percentage })
+
 ## FILE MANAGER API
 
 @app.get('/get_files')
@@ -104,26 +121,18 @@ def get_files():
 def videos_page():
     output_directory = Config().get_output_path()
     file_list = os.listdir(output_directory)
-    print(os.getcwd())
-    print("============")
-    print("============")
-    print("============")
-    print("============")
-    print("============")
-    print("============")
     # return True
     return render_template('./main.html', files=file_list)
 
 @app.route('/download/<filename>')
 def download_video(filename):
     output_directory = Config().get_output_path()
-    return send_from_directory(output_directory, filename)
+    return send_from_directory(output_directory, filename, as_attachment=True)
 
 @app.route('/video/<filename>')
 def view_video(filename):
     output_directory = Config().get_output_path()
-    video_path = os.path.join(output_directory, filename)
-    return render_template('video.html', video_path=video_path)
+    return send_from_directory(output_directory, filename, conditional=True)
 
 # CLIENT API
 
@@ -147,18 +156,28 @@ def css(folder,file):
 def video_feed():
     return camera_thread.flask_stream()
 
-def response(has_success, description="", data={}):
-    return jsonify({
-        "success": has_success, 
-        "description": description,
-        "data": data,
-    })
+@app.route('/convert/<file>')
+def convert(file):
+    convert(file)
+    return True
 
+def convert(filename):
+    dest = f'/home/james/PiSecurityCamera/output_mp4/{filename.replace("h264", "mp4")}'
+    cmd='/usr/bin/ffmpeg -i "{}" -f mp4 -vcodec copy -acodec libfaac -b:a 112k -ac 2 -y "{}"'.format(Config().get_output_path() + '/' + filename, dest)
+
+    out = f'./output_mp4/{filename.replace("h264", "mp4")}'
+
+    cmd = ['ffmpeg', '-i', f'./output/{filename}', '-c:v', 'libx264', '-c:a', 'aac', '-y', out]
+    subprocess.call(cmd)
+    
+    return send_from_directory('static', dest)
+
+@app.route('/video/<filename>')
+def test(filename):
+    return send_from_directory('static', filename)
 
 # Initial start
 if __name__ == '__main__':
-    # os.chdir('/home/james/PiSecurityCamera')
-
     start_camera_init_thread()
     start_servo_init_thread()
     
