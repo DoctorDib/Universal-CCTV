@@ -19,8 +19,35 @@ class Config():
         finally:
             return response
         
+    def text_settings(self, key):
+        base = self.get('text_settings')
+        return base[key]
+    
+    def drive_settings(self, key):
+        base = self.get('drive_settings')
+        return base[key]
+    
+    def camera_settings(self, key):
+        base = self.get('camera_settings')
+        return base[key]
+    
+    def stream_settings(self, key):
+        base = self.get('stream_settings')
+        return base[key]
+    def video_settings(self, key):
+        base = self.get('video_settings')
+        return base[key]
+    def snapshot_settings(self, key):
+        base = self.get('snapshot_settings')
+        return base[key]
+    
     ## CUSTOM SPECIFIC
-    def get_output_path(self):
-        main_directory = self.get('main_location')
-        save_path = self.get('save_path')
-        return main_directory + save_path
+    def video_path(self):
+        return os.getcwd() + self.video_settings('location')
+    def build_video_path(self, file_name: str):
+        return f"{self.video_path()}/{file_name}"
+
+    def snapshot_path(self):
+        return os.getcwd() + self.snapshot_settings('location')
+    def build_snapshot_path(self, file_name: str):
+        return f"{self.snapshot_path()}/{file_name}"

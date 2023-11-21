@@ -91,6 +91,12 @@ def stop_camera():
     print("Fin shutting down")
     return response(True, "Camera has stopped")
 
+@app.get('/snapshot')
+def take_snapshot():
+    # Taking a snapshot
+    camera_thread.snapshot()
+    return response(True, "Snapshot taken")
+
 ## SERVO API
 
 @app.get('/move/<int:percentage>')

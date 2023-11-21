@@ -1,13 +1,8 @@
 {
-    "version": "2.1",
-
+    "version": "2.2",
     "ip": "",
     "port": 8000,
     "location": "London",
-    "minutes": 60,
-    "max_videos": 72,
-    "main_location": "/home/james/PiSecurityCamera",
-    "save_path": "/output",
     "solar_depression": "civil",
     
     "text_settings": {
@@ -20,7 +15,22 @@
         "max_videos": 72
     },
 
-    "settings": {
+    "video_settings": {
+        "location": "/video",
+        "format": "h264",
+        "max_minutes": 60
+    },
+
+    "snapshot_settings": {
+        "location": "/snapshot",
+        "format": "jpeg"
+    },
+
+    "stream_settings": {
+        "format": "mjpeg"
+    },
+
+    "camera_settings": {
         "morning": {
             "resolution": "640X480",
             "framerate": 24,
@@ -37,6 +47,7 @@
             "sensor_mode": 0,
             "rotation": 0
         },
+
         "day": {
             "resolution": "640X480",
             "framerate": 24,
@@ -53,8 +64,8 @@
             "sensor_mode": 0,
             "rotation": 0
         },
-        "night": {
 
+        "night": {
             "resolution": "640X480",
             "framerate": 12,
             "awb_mode": "auto",

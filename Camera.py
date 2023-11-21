@@ -71,8 +71,8 @@ class FileManager():
     def files_limit_check(self):
         # Removing files if over the limit
         files = sorted(os.listdir(os.getcwd()), key=os.path.getmtime)
-        if len(files) > self.config.get('max_videos'):
-            os.system('rm -rf ' + self.config.get('main_location') + self.config.get('save_path') + '/' + files[0])
+        if len(files) > self.config.drive_settings('max_videos'):
+            os.system('rm -rf ' + self.config.build_video_path(files[0]))
 
 class Camera():
     should_tick = False
@@ -114,14 +114,14 @@ class Camera():
         if (len(settingSelection) >= 2):
             # FIXED MODE - Sticks only to one setting
             self.fixed_mode = True
-            self.selected_setting = self.config.get('settings')[settingSelection[0]]
+            self.selected_setting = self.config.camera_settings(settingSelection[0])
         else:
             # NORMAL MODE - Cycles through day time
             resp = self.helper.checkSun(settingSelection[0])
             self.is_new_selection = resp[0]
             self.selection = resp[1]
 
-            self.selected_setting = self.config.get('settings')[self.selection]
+            self.selected_setting = self.config.camera_settings(self.selection)
         
         self.camera.resolution = self.selected_setting["resolution"]
         self.camera.framerate = self.selected_setting["framerate"]
@@ -139,14 +139,14 @@ class Camera():
         self.camera.rotation = self.selected_setting["rotation"]
 
         try:
-            self.camera.annotate_background = pc.Color(self.config.get('text_settings')["background_color"])
-            self.camera.annotate_foreground = pc.Color(self.config.get('text_settings')["text_color"])
+            self.camera.annotate_background = pc.Color(self.config.text_settings("background_color"))
+            self.camera.annotate_foreground = pc.Color(self.config.text_settings("text_color"))
         except Exception as e:
             # On Windows 
             print("ERROR: Using windows machine, PiCamera module not avaliable")
             print(f"More Info: {e}")
 
-        self.camera.annotate_text_size = self.config.get('text_settings')["text_size"]
+        self.camera.annotate_text_size =self.config.text_settings("text_size")
 
     # STEP 2
     def initialise_camera(self):
@@ -174,13 +174,22 @@ class Camera():
         sleep(.5)
         self.initialise_camera()
 
+    def snapshot(self):
+        time_stamp = self.__get_timestamp()
+        snapshot_format = self.config.snapshot_settings('format')
+        snapshot_path = self.config.build_snapshot_path(f"{time_stamp}.{snapshot_format}")
+        self.camera.capture(snapshot_path)
+
     # STEP 3
     def __start_recording(self):
-        timeStamp = strftime("%Y-%m-%d_%H-%M-%S", gmtime())
+        time_stamp = self.__get_timestamp()
+        video_format = self.config.video_settings('format')
+        video_path = self.config.build_video_path(f"{time_stamp}.{video_format}")
+        self.camera.start_recording(video_path)
 
-        self.camera.start_recording(self.config.get_output_path() + '/' + timeStamp + ".h264") # it was h264]
         if self.is_new_selection and not self.fixed_mode:
-            self.camera.start_recording(self.output, format='mjpeg', splitter_port=2)
+            stream_format = self.config.stream_settings('format')
+            self.camera.start_recording(self.output, format=stream_format, splitter_port=2)
 
         self.start_duration = int(dt.datetime.now().timestamp() * 1000)
         # Start should
@@ -226,17 +235,22 @@ class Camera():
             # Ensure we have not hit the file limit        
             self.file_manager.files_limit_check()
             # Setting timer text        
-            self.camera.annotate_text = self.helper.grabTextMode(self.selection) + " - " + dt.datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+            self.camera.annotate_text = self.helper.grabTextMode(self.selection) + " - " + self.__get_formatted_time()
             # camera timeout
             self.camera.wait_recording(0.1)
 
             current_duration = int(dt.datetime.now().timestamp() * 1000)
 
-            if (current_duration - self.start_duration) > ((self.config.get('minutes') * 60) * 1000):
+            if (current_duration - self.start_duration) > ((self.config.video_settings('max_minutes') * 60) * 1000):
                 self.restart()
         except KeyboardInterrupt:
             print("KeyboardInterrupt: Stopping the camera and exiting.")
             self._kill()
+
+    def __get_formatted_time(self):
+        return dt.datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+    def __get_timestamp(self):
+        return strftime("%Y-%m-%d_%H-%M-%S", gmtime())
 
     def _kill(self):
         self.__stop_recording()
