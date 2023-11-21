@@ -205,8 +205,8 @@ class Camera():
         video_format = self.config.video_settings('format')
         video_path = self.config.build_video_path(f"{time_stamp}.{video_format}")
         # Creating a thumbnail for recording
-        self.snapshot(name=time_stamp, is_thumbnail=True)
         self.camera.start_recording(video_path)
+        self.snapshot(name=time_stamp, is_thumbnail=True)
 
         if self.is_new_selection and not self.fixed_mode:
             stream_format = self.config.stream_settings('format')
