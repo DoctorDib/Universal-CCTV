@@ -149,25 +149,25 @@ def get_servo_position_percentage():
 
 @app.get('/get_files')
 def get_files():
-    output_directory = Config().get_output_path()
+    output_directory = Config().video_path()
     file_list = os.listdir(output_directory)
     return response(True, data={ "files": file_list })
 
 @app.route('/videos')
 def videos_page():
-    output_directory = Config().get_output_path()
+    output_directory = Config().video_path()
     file_list = os.listdir(output_directory)
     # return True
     return render_template('./main.html', files=file_list)
 
 @app.route('/download/<filename>')
 def download_video(filename):
-    output_directory = Config().get_output_path()
+    output_directory = Config().video_path()
     return send_from_directory(output_directory, filename, as_attachment=True)
 
 @app.route('/video/<filename>')
 def view_video(filename):
-    output_directory = Config().get_output_path()
+    output_directory = Config().video_path()
     return send_from_directory(output_directory, filename, conditional=True)
 
 # CLIENT API
@@ -199,7 +199,7 @@ def convert(file):
 
 def convert(filename):
     dest = f'/home/james/PiSecurityCamera/output_mp4/{filename.replace("h264", "mp4")}'
-    cmd='/usr/bin/ffmpeg -i "{}" -f mp4 -vcodec copy -acodec libfaac -b:a 112k -ac 2 -y "{}"'.format(Config().get_output_path() + '/' + filename, dest)
+    cmd='/usr/bin/ffmpeg -i "{}" -f mp4 -vcodec copy -acodec libfaac -b:a 112k -ac 2 -y "{}"'.format(Config().video_path() + '/' + filename, dest)
 
     out = f'./output_mp4/{filename.replace("h264", "mp4")}'
 
