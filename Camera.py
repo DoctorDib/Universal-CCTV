@@ -186,11 +186,11 @@ class Camera():
         name = time_stamp if name is None else name
 
         if (is_thumbnail):
-            snapshot_format = self.config.snapshot_settings('format')
-            path = self.config.build_snapshot_path(f"{name}.{snapshot_format}")
-        else:
             snapshot_format = self.config.thumbnail_settings('format')
             path = self.config.build_thumbnail_path(f"{name}.{snapshot_format}")
+        else:
+            snapshot_format = self.config.snapshot_settings('format')
+            path = self.config.build_snapshot_path(f"{name}.{snapshot_format}")
             
         self.camera.capture(path)
     
