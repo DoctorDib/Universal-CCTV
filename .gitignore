@@ -1,6 +1,8 @@
 *.xml
 .idea/PiSecurityCamera.iml
 /Client/node_modules
-/output
+/video
+/videos
+/snapshop
 
 /__pycache__/*

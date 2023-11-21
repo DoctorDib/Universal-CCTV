@@ -9,6 +9,11 @@ class Config():
         with open(os.path.abspath(os.path.split(sys.argv[0])[0]) + '/config.json') as data_file:
             self.data = json.load(data_file)
 
+        # Create video folder if it does not exist
+        self.__create_directory(self.video_path())
+        # Create snapshop folder if it does not exist
+        self.__create_directory(self.snapshot_path())
+
     def get(self, key):
         response = None
 
@@ -51,3 +56,12 @@ class Config():
         return os.getcwd() + self.snapshot_settings('location')
     def build_snapshot_path(self, file_name: str):
         return f"{self.snapshot_path()}/{file_name}"
+    
+    def __create_directory(directory_path):
+        # Check if the directory already exists
+        if not os.path.exists(directory_path):
+            # If not, create the directory
+            os.makedirs(directory_path)
+            print(f"Directory '{directory_path}' created.")
+        else:
+            print(f"Directory '{directory_path}' already exists.")
