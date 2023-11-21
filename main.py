@@ -109,8 +109,7 @@ def get_snapshot_list():
 @app.route('/get/snapshot/<filename>')
 def get_snapshot(filename):
     path = Config().snapshot_path()
-    name = f"{filename}.{Config().snapshot_settings('format')}"
-    return send_from_directory(path, name, conditional=True)
+    return send_from_directory(path, filename, conditional=True)
 
 @app.route('/delete/snapshot/<filename>')
 def delete_snapshot(filename):
