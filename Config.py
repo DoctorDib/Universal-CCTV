@@ -57,7 +57,7 @@ class Config():
     def build_snapshot_path(self, file_name: str):
         return f"{self.snapshot_path()}/{file_name}"
     
-    def __create_directory(directory_path):
+    def __create_directory(self, directory_path):
         # Check if the directory already exists
         if not os.path.exists(directory_path):
             # If not, create the directory
