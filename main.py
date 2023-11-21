@@ -91,11 +91,41 @@ def stop_camera():
     print("Fin shutting down")
     return response(True, "Camera has stopped")
 
+# SNAPSHOTS
+
 @app.get('/snapshot')
 def take_snapshot():
     # Taking a snapshot
     camera_thread.snapshot()
     return response(True, "Snapshot taken")
+
+@app.route('/get/snapshot_list')
+def get_snapshot_list():
+    path = Config().snapshot_path()
+    picture_files = [f for f in os.listdir(path) if os.path.isfile(os.path.join
+    (path, f))]
+    return response(True, "Image List", data={ "pictures": picture_files })
+
+@app.route('/get/snapshot/<str:filename>')
+def get_snapshot(filename):
+    path = Config().snapshot_path()
+    name = f"{filename}.{Config().snapshot_settings('format')}"
+    return send_from_directory(path, name, conditional=True)
+
+@app.route('/delete/snapshot/<str:filename>')
+def delete_snapshot(filename):
+    camera_thread.delete_snapshot(filename)
+    return response(True, f"Successfully deleted {filename}")
+
+# THUMBNAIL
+
+@app.route('/get/thumbnail/<str:filename>')
+def get_thumbnail(filename):
+    # removing the format (I only care about the name)
+    filename = filename.split('.')[0]
+    path = Config().thumbnail_path()
+    name = f"{filename}.{Config().thumbnail_settings('format')}"
+    return send_from_directory(path, name, conditional=True)
 
 ## SERVO API
 

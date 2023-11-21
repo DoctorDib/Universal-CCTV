@@ -26,6 +26,11 @@
         "format": "jpeg"
     },
 
+    "thumbnail_settings": {
+        "location": "/thumbnails",
+        "format": "jpeg"
+    },
+
     "stream_settings": {
         "format": "mjpeg"
     },

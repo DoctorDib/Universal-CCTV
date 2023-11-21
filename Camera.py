@@ -98,6 +98,13 @@ class Camera():
         self.output = StreamingOutput()
         self.file_manager = FileManager()
 
+        # Create video folder if it does not exist
+        self.config.create_directory(self.config.video_path())
+        # Create snapshop folder if it does not exist
+        self.config.create_directory(self.config.snapshot_path())
+        # Create thumbnail folder if it does not exist
+        self.config.create_directory(self.config.thumbnail_path())
+
         self.streaming_handler = StreamingHandler
         self.streaming_handler.output = self.output  # Set output_instance as a class attribute
         self.streaming_handler.is_running = self.is_running  # Set output_instance as a class attribute
@@ -174,17 +181,31 @@ class Camera():
         sleep(.5)
         self.initialise_camera()
 
-    def snapshot(self):
+    def snapshot(self, name: str = None, is_thumbnail: bool = False):
         time_stamp = self.__get_timestamp()
-        snapshot_format = self.config.snapshot_settings('format')
-        snapshot_path = self.config.build_snapshot_path(f"{time_stamp}.{snapshot_format}")
-        self.camera.capture(snapshot_path)
+        name = time_stamp if name is None else name
+
+        if (is_thumbnail):
+            snapshot_format = self.config.snapshot_settings('format')
+            path = self.config.build_snapshot_path(f"{name}.{snapshot_format}")
+        else:
+            snapshot_format = self.config.thumbnail_settings('format')
+            path = self.config.build_thumbnail_path(f"{name}.{snapshot_format}")
+            
+        self.camera.capture(path)
+    
+    def delete_snapshot(self, name: str):
+        file_path = self.config.snapshot_path(name)
+        if os.path.exists(file_path):
+            os.remove(file_path)
 
     # STEP 3
     def __start_recording(self):
         time_stamp = self.__get_timestamp()
         video_format = self.config.video_settings('format')
         video_path = self.config.build_video_path(f"{time_stamp}.{video_format}")
+        # Creating a thumbnail for recording
+        self.snapshot(name=time_stamp, is_thumbnail=True)
         self.camera.start_recording(video_path)
 
         if self.is_new_selection and not self.fixed_mode:
@@ -199,6 +220,7 @@ class Camera():
     def __start_web_server(self):
         self.serverThread = threading.Thread(name='runServer', target=self.__run_server)
         self.serverThread.start()
+        
     # STEP 4.1
     def __run_server(self):
         try:
