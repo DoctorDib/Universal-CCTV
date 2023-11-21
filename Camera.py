@@ -204,10 +204,8 @@ class Camera():
         time_stamp = self.__get_timestamp()
         video_format = self.config.video_settings('format')
         video_path = self.config.build_video_path(f"{time_stamp}.{video_format}")
-        # Creating a thumbnail for recording
         self.camera.start_recording(video_path)
-        self.snapshot(name=time_stamp, is_thumbnail=True)
-
+        
         if self.is_new_selection and not self.fixed_mode:
             stream_format = self.config.stream_settings('format')
             self.camera.start_recording(self.output, format=stream_format, splitter_port=2)
@@ -215,6 +213,9 @@ class Camera():
         self.start_duration = int(dt.datetime.now().timestamp() * 1000)
         # Start should
         self.should_tick = True
+
+        # Creating a thumbnail for recording
+        self.snapshot(name=time_stamp, is_thumbnail=True)
     
     # STEP 4
     def __start_web_server(self):
