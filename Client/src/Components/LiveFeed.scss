@@ -1,8 +1,11 @@
 .livefeed-container {
-    max-width: 1280px;
+    max-width: 50vw;
+    margin: 20px;
     
     .camera-display {
         width: 100%;
+        border-radius: 20px;
+        border: 2px solid #717171;
     }
     
     .control-bar {
@@ -12,6 +15,7 @@
             display: flex;
             justify-content: center;
             align-items: center;
+
             button {
                 display: flex;
                 justify-content: center;
@@ -22,31 +26,49 @@
                 width: 100px;
                 height: 100px;
                 cursor: pointer;
+                border: 3px solid #bbb;
+                border-radius: 20%;
+                box-shadow: inset 0 0 10px black;
+
+                &:hover {
+                    box-shadow: inset 0 0 20px black;
+                }
+
+                &:active {
+                    box-shadow: inset 0 0 50px black;
+                }
             }
         }
 
         .horizontal-slider {
             width: 100%;
             height: 50px;
+
             .mark {
                 display: flex;
                 height: 30px;
                 width: 30px;
                 border: 2px #7b7b7b solid;
                 border-radius: 100%;
-                z-index: 10;
+                cursor: pointer;
+                box-shadow: inset 0 0 10px black;
+                background-color: #4d4d4d;
 
                 &:nth-last-child(10) {
                     border: 2px white solid !important;
                 }
+
                 &:nth-last-child(6) {
                     border: 2px white solid !important;
                 }
+
+                &:hover {
+                    box-shadow: inset 0 0 15px black;
+                }
             }
 
-            .example-thumb {
-                background-color: white;
-
+            .thumb {
+                background-color: #ccc;
                 width: 24px;
                 height: 24px;
                 border-radius: 100%;;
@@ -58,6 +80,7 @@
                 text-align: center;
                 justify-content: center;
                 align-items: center;
+                
             }
         }
     }

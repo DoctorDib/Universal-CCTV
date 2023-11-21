@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { FaPlay, FaStop } from "react-icons/fa";
+import { FaPlay, FaStop, FaCameraRetro } from "react-icons/fa";
 import { VscDebugRestart } from "react-icons/vsc";
 
 import './LiveFeed.scss';
@@ -31,10 +31,13 @@ const Layout = ({ShowControl = true}:LiveFeedInterface) => {
         fetch(`http://192.168.0.21:5000/start`);
     };
 
+    const onSnapshot = () => {
+        fetch(`http://192.168.0.21:5000/snapshot`);
+    };
+
     useEffect(() => {
         const moveServo = async () => {
             try {
-
                 if (value != null) {
                     setValue(client);
                     
@@ -77,14 +80,13 @@ const Layout = ({ShowControl = true}:LiveFeedInterface) => {
 
             <div className={'control-bar'} style={{display: ShowControl ? 'block' : 'none'}}>
                 <ReactSlider
-                    className="horizontal-slider"
+                    className={"horizontal-slider"}
+                    markClassName={"mark"} 
+                    thumbClassName={"thumb"}
                     marks
-                    markClassName="mark"
                     min={0}
                     max={10}
                     value={client / 10}
-                    thumbClassName="example-thumb"
-                    trackClassName="example-track"
                     renderThumb={(props, state) => <div {...props}>{value}</div>}
                     onChange={handleChange}
                 />
@@ -93,6 +95,7 @@ const Layout = ({ShowControl = true}:LiveFeedInterface) => {
                     <button onClick={()=>onStart()} content="start"> <FaPlay/> </button>
                     <button onClick={()=>onStop()} content="stop"> <FaStop/> </button>
                     <button onClick={()=>onRestart()} content="restart"> <VscDebugRestart/> </button>
+                    <button onClick={()=>onSnapshot()} content="snapshot" style={{backgroundColor: '#57a657'}}> <FaCameraRetro/> </button>
                 </div>
             </div>
         </div> 

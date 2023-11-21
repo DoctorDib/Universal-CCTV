@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 
 import VideoList from './Components/VideoList.tsx';
 import LiveFeed from './Components/LiveFeed.tsx';
+import SnapshotList from './Components/SnapshotList.tsx';
 
 import JMuxer from 'jmuxer';
 
@@ -37,14 +38,13 @@ const App = () => {
 
     return (
         <div className={'app-container'}>
-
             <div className={'container'}>
                 <div className={'title'}> {selectedVideo} </div>
                 { selectedVideo == null ? <LiveFeed ShowControl/> : <video id="h264Stream" width="100%"  controls></video> }
             </div>
 
+            <SnapshotList/>
             <div className={'side-bar'}>
-                
                 <VideoList selectedVideo={selectedVideo} setSelectedVideo={setSelectedVideo}/>
             </div>
         </div>

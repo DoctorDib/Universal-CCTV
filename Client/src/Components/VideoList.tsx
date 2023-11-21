@@ -2,7 +2,7 @@
 import React from 'react';
 import { useState, useEffect } from 'react';
 import classNames from 'classnames';
-import { FaDownload } from "react-icons/fa";
+import { FaDownload, FaEye } from "react-icons/fa";
 
 import './VideoList.scss';
 import LiveFeed from './LiveFeed.tsx';
@@ -15,14 +15,18 @@ interface VideoList {
 const App = ({ setSelectedVideo, selectedVideo }: VideoList) => {
 
     const [videoList, setVideoList] = useState<Array<string>>([]); // Set an initial value
+    const [previewSelection, setPreviewSelection] = useState<string | null>(null);
 
     const formatName = (name: string) => {
         console.log(name)
         name = name.split('.')[0];
         name = name.replace('_', '-');
+        
         const split = name.split('-');
         return `${split[3]}:${split[4]} ${split[2]}/${split[1]}/${split[0]}`;
     };
+
+    const loadVideo = (name: string) => setSelectedVideo(name);
 
     useEffect(() => {
         const fetchData = async () => {
@@ -50,19 +54,25 @@ const App = ({ setSelectedVideo, selectedVideo }: VideoList) => {
 
             <div onClick={()=>setSelectedVideo(null)}>
                 {
-                    selectedVideo == null ? <div className={'camera-display'}></div> : <LiveFeed ShowControl={false}/>
+                    selectedVideo == null 
+                        ? <img src={`http://192.168.0.21:5000/get/thumbnail/${previewSelection}`} className={'camera-display'}/>
+                        : <LiveFeed ShowControl={false}/>
                 }
             </div>
             
             <div className={'list-container'}>
                 {videoList.slice().sort((a, b) => b.localeCompare(a)).map((name, index) => (
-                    <div key={index} className={classNames('video-button', name == selectedVideo ? 'selected' : null)} onClick={() => setSelectedVideo(name)}>
+                    <div key={index} className={classNames('video-button', name == previewSelection ? 'selected' : null)} onClick={() => setPreviewSelection(name)}>
                         <div className='main-content'>
                             <a href={'http://192.168.0.21:5000/download/' + name}>
                                 <div className='download-button'>
                                     <FaDownload />
                                 </div>
                             </a>
+                            
+                            <div className='download-button' onClick={() => loadVideo(name)}>
+                                <FaDownload />
+                            </div>
                             
                             {formatName(name)}
                         </div>
