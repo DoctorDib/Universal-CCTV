@@ -1,11 +1,10 @@
 
-import React from 'react';
 import { useState, useEffect } from 'react';
 import classNames from 'classnames';
 import { FaDownload, FaEye } from "react-icons/fa";
 
 import './VideoList.scss';
-import LiveFeed from './LiveFeed.tsx';
+import LiveFeed from './LiveFeed';
 
 interface VideoList {
     setSelectedVideo: (filename: string | null) => void,

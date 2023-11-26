@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { FaPlay, FaStop, FaCameraRetro } from "react-icons/fa";
 import { VscDebugRestart } from "react-icons/vsc";
 
@@ -14,7 +14,7 @@ const Layout = ({ShowControl = true}:LiveFeedInterface) => {
     const [value, setValue] = useState<number | null>(null); // Set an initial value
     const [client, setClient] = useState<number>(50); // Set an initial value
 
-    const handleChange = (newValue) => {
+    const handleChange = (newValue:any) => {
         console.log(newValue * 10)
         setClient(newValue * 10);
     };

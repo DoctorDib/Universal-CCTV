@@ -1,7 +1,5 @@
 
-import React from 'react';
 import { useState, useEffect } from 'react';
-import classNames from 'classnames';
 import { FaTrash } from "react-icons/fa";
 
 import './SnapshotList.scss';
