@@ -4,6 +4,8 @@ from http import server
 import io
 import socketserver
 
+import numpy as np
+
 class StreamingOutput(object):
     def __init__(self):
         self.frame = None
@@ -11,6 +13,10 @@ class StreamingOutput(object):
         self.condition = Condition()
 
     def write(self, buf):
+        if isinstance(buf, np.ndarray):
+            # If buf is a NumPy array, convert it to bytes
+            buf = buf.tobytes()
+
         if buf.startswith(b'\xff\xd8'):
             # New frame, copy the existing buffer's content and notify all
             # clients it's available
@@ -19,6 +25,7 @@ class StreamingOutput(object):
                 self.frame = self.buffer.getvalue()
                 self.condition.notify_all()
             self.buffer.seek(0)
+
         return self.buffer.write(buf)
 
 class StreamingHandler(server.BaseHTTPRequestHandler):

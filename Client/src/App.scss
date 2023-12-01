@@ -1,6 +1,8 @@
 .app-container {
     display: flex;
     flex-direction: row;
+    width: 100%;
+    justify-content: space-between;
 
     .side-bar {
         background-color: #202020;
@@ -10,13 +12,18 @@
     }
 
     .container {
-        width: 100%;
+        max-width: 50vw;
 
         .title {
             font-size: 38px;
             color: white;
             text-align: center;
             padding: 20px;
+        }
+
+        .video-player {
+            width: 100%;
+            
         }
     }   
 }

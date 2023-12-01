@@ -4,6 +4,7 @@
     "port": 8000,
     "location": "London",
     "solar_depression": "civil",
+    "use_servo": false,
     
     "text_settings": {
         "text_size": 20,
@@ -32,7 +33,7 @@
     },
 
     "stream_settings": {
-        "format": "mjpeg"
+        "format": "jpeg"
     },
 
     "camera_settings": {

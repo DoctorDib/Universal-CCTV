@@ -1,5 +1,7 @@
 from flask import Flask, jsonify, render_template, send_from_directory
+from collections import namedtuple
 from flask_cors import CORS
+from time import sleep
 
 from Camera import Camera
 from Servo import Servo
@@ -7,13 +9,16 @@ from Config import Config
 
 import subprocess
 import os.path
-from time import sleep
+import psutil
+import platform
 
 import threading
 import os
 
 camera_thread : Camera = Camera()
 servo_thread : Servo = Servo(11)
+
+_ntuple_diskusage = namedtuple('usage', 'total used free')
 
 app = Flask(__name__)
 CORS(app)
@@ -168,6 +173,31 @@ def download_video(filename):
 def view_video(filename):
     output_directory = Config().video_path()
     return send_from_directory(output_directory, filename, conditional=True)
+
+@app.route('/get/disk')
+def get_disk_space():
+    system_platform = platform.system()
+
+    if system_platform == 'Windows':
+        partitions = psutil.disk_partitions()
+        for partition in partitions:
+            if 'fixed' in partition.opts.lower():
+                disk_usage = psutil.disk_usage(partition.mountpoint)
+                total_space = disk_usage.total
+                available_space = disk_usage.free
+                break
+    elif system_platform == 'Linux':
+        disk_usage = psutil.disk_usage('/')
+        total_space = disk_usage.total
+        available_space = disk_usage.free
+    else:
+        print(f"Unsupported platform: {system_platform}")
+        return response(False, f"Unsupported platform to grab disk space: {system_platform}")
+
+    total_gb = total_space / (1024 ** 3)
+    available_gb = available_space / (1024 ** 3)
+
+    return response(True, data={ "total": total_gb, "availiable": available_gb })
 
 # CLIENT API
 
