@@ -1,10 +1,13 @@
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useContext } from 'react';
 import classNames from 'classnames';
 import { FaDownload, FaEye } from "react-icons/fa";
 
 import './VideoList.scss';
 import LiveFeed from './LiveFeed';
+import StorageController from './StorageController';
+import { BuildUrl, FetchData, } from '../Helpers/helper';
+import ConfigContext from '../Helpers/ConfigContext';
 
 interface VideoList {
     setSelectedVideo: (filename: string | null) => void,
@@ -12,9 +15,10 @@ interface VideoList {
 }
 
 const App = ({ setSelectedVideo, selectedVideo }: VideoList) => {
-
     const [videoList, setVideoList] = useState<Array<string>>([]); // Set an initial value
     const [previewSelection, setPreviewSelection] = useState<string | null>(null);
+    const [imageUrl, setImageUrl] = useState<string>("");
+    const { config } = useContext(ConfigContext);
 
     const formatName = (name: string) => {
         console.log(name)
@@ -28,15 +32,14 @@ const App = ({ setSelectedVideo, selectedVideo }: VideoList) => {
     const loadVideo = (name: string) => setSelectedVideo(name);
 
     useEffect(() => {
-        const fetchData = async () => {
+        const getFiles = async () => {
             try {
-                const response = await fetch('http://192.168.0.21:5000/get_files');
+                const response = await FetchData(config, "/get_files");
 
                 // Check if the request was successful (status code 200)
-                if (response.ok) {
-                    var data = (await response.json()).data.files;
-                    setVideoList(data)
-                    // setValue((await response.json()).data.position * 100);                
+                if (response.success) {
+                    var data = response.data.files;
+                    setVideoList(data);
                 } else {
                     console.error(`Error: ${response.status}`);
                 }
@@ -45,35 +48,53 @@ const App = ({ setSelectedVideo, selectedVideo }: VideoList) => {
             }
         };
     
-        fetchData();
-    }, []); // Empty dependency array to run the effect only once when the component mounts
+        getFiles();
+    }, [config]); // Empty dependency array to run the effect only once when the component mounts
+
+    useEffect(() => {
+        const getUrl = () => {
+            if (previewSelection === null) {
+                return;
+            }
+
+            setImageUrl(BuildUrl(config, `/get/thumbnail/${previewSelection}`));
+        }
+        getUrl();
+    }, [previewSelection]);
 
     return (
         <div className={'video-list-container'}>
 
+            <div className={'storage-display'}>
+                <StorageController/>
+            </div>
+
             <div onClick={()=>setSelectedVideo(null)}>
                 {
                     selectedVideo == null 
-                        ? <img src={`http://192.168.0.21:5000/get/thumbnail/${previewSelection}`} className={'camera-display'}/>
+                        ? <img src={imageUrl} className={'camera-display'}/>
                         : <LiveFeed ShowControl={false}/>
                 }
             </div>
-            
+
             <div className={'list-container'}>
                 {videoList.slice().sort((a, b) => b.localeCompare(a)).map((name, index) => (
                     <div key={index} className={classNames('video-button', name == previewSelection ? 'selected' : null)} onClick={() => setPreviewSelection(name)}>
                         <div className='main-content'>
-                            <a href={'http://192.168.0.21:5000/download/' + name}>
-                                <div className='download-button'>
-                                    <FaDownload />
-                                </div>
-                            </a>
                             
-                            <div className='download-button' onClick={() => loadVideo(name)}>
-                                <FaDownload />
+                            <div className='video-option'>
+                                <a href={BuildUrl(config, `/download/${name}`)}>
+                                    <FaDownload />
+                                </a>
                             </div>
                             
-                            {formatName(name)}
+                            <div className='video-option' onClick={() => loadVideo(name)}>
+                                <FaEye />
+                            </div>
+                            
+                            <div className={'date'}>
+                                {formatName(name)}
+                            </div>
                         </div>
 
                         {index == 0 ? <div className={'blinking-circle'}> </div> : null}

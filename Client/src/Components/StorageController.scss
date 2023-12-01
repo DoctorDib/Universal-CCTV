@@ -1,0 +1,34 @@
+.storage-container {
+    color: #FFFFFF;
+    width: 100%;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+
+    .titles {
+        display: flex;
+        justify-content: space-around;
+        padding: 2px;
+        background-color: #171717;
+        height: 100%;
+    }
+
+    .info {
+        display: flex;
+        justify-content: space-around;
+        padding: 2px;
+        background-color: #404040;
+        height: 100%;
+    }
+
+    .bar {
+        background-color: #1d1d20;
+        width: 100%;
+        height: 15px;
+
+        .filler {
+            background-color: #791616;
+            height: 100%;
+        }
+    }
+}
