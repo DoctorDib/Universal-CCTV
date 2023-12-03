@@ -72,8 +72,15 @@ class Camera(CameraBase):
 
     # STEP 3
     def _start_recording(self):
+        time_stamp = super()._get_timestamp()
         self.start_duration = int(dt.datetime.now().timestamp() * 1000)
         self.should_tick = True
+        self.fourcc = cv2.VideoWriter_fourcc(*'mp4v')  # You can choose other codecs like 'MJPG', 'MP4V', etc.
+        video_format = 'mp4' #self.config.video_settings('format')
+        video_path = self.config.build_video_path(f"{time_stamp}.{video_format}")
+
+        self.out = cv2.VideoWriter(video_path, self.fourcc, 20.0, (640, 480))  # Adjust parameters as needed
+
         # Creating a thumbnail for recording
         # self.snapshot(name=time_stamp, is_thumbnail=True)
     
@@ -145,11 +152,14 @@ class Camera(CameraBase):
         text_y = int(bar_height / 2) + int(text_size[1] / 2)
         cv2.putText(frame, text, (text_x, text_y), font, font_scale, (255, 255, 255), font_thickness, cv2.LINE_AA)
 
+        # Saving recording
+        self.out.write(frame)
+
+        # Streaming
         format = self.config.stream_settings('format')
         _, encoded_frame = cv2.imencode(f'.{format}', frame)
-
         self.output.write(encoded_frame)
-
+        
     def _kill(self):
         self._stop_recording()
         super()._kill()

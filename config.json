@@ -18,7 +18,7 @@
 
     "video_settings": {
         "location": "/video",
-        "format": "h264",
+        "format": "mp4",
         "max_minutes": 60
     },
 

@@ -1,32 +1,37 @@
-from flask import Flask, jsonify, render_template, send_from_directory
-from collections import namedtuple
+import cv2
+from flask import Flask, jsonify, render_template, send_from_directory, send_file
 from flask_cors import CORS
-from time import sleep
 
-from Camera import Camera
+try:
+    # Raspberry Pi camera
+    from CameraPi import Camera
+except:
+    # Anything else that's not a Raspberry Pi Camera
+    from CameraCv import Camera
+    
 from Servo import Servo
 from Config import Config
 
+import os
+import os.path
 import subprocess
 import os.path
 import psutil
 import platform
-
+from time import sleep
 import threading
 import os
 
-camera_thread : Camera = Camera()
+camera_thread : Camera() = Camera()
 servo_thread : Servo = Servo(11)
 
-_ntuple_diskusage = namedtuple('usage', 'total used free')
+# _ntuple_diskusage = namedtuple('usage', 'total used free')
 
 app = Flask(__name__)
 CORS(app)
 
-# eleven = Servo(11)
-
 react_folder = 'Client'
-directory= os.getcwd() + f'/{react_folder}/build/static'
+directory= f'{os.getcwd()}/{react_folder}/build/static'
 
 def start_camera_init_thread():
     global camera_init_thread
@@ -47,6 +52,8 @@ def response(has_success, description="", data={}):
 
 def generate_frames():
     while camera_thread.is_running:
+        if cv2.waitKey(1) & 0xFF == ord('q'): 
+            break
         frame = camera_thread.get_frame()
         yield (b'--FRAME\r\n'
                b'Content-Type: image/jpeg\r\n\r\n' + frame + b'\r\n')
@@ -68,7 +75,9 @@ def start_camera():
         return response(False, "Camera already running")
 
     start_camera_init_thread()
-    start_servo_init_thread()
+
+    if (Config().get('use_servo')):
+        start_servo_init_thread()
     
     return response(True, "Camera initialization started")
 
@@ -172,7 +181,8 @@ def download_video(filename):
 @app.route('/video/<filename>')
 def view_video(filename):
     output_directory = Config().video_path()
-    return send_from_directory(output_directory, filename, conditional=True)
+    return send_from_directory(output_directory, filename, as_attachment=True)
+    # return send_file(f"{output_directory}/{filename}", mimetype='video/mp4')
 
 @app.route('/get/disk')
 def get_disk_space():
@@ -198,7 +208,6 @@ def get_disk_space():
     available_gb = available_space / (1024 ** 3)
 
     return response(True, data={ "total": total_gb, "availiable": available_gb })
-
 # CLIENT API
 
 @app.route('/')
@@ -207,6 +216,11 @@ def index():
     path= os.getcwd()+ f'/{react_folder}/build'
     print(path)
     return send_from_directory(directory=path,path='index.html')
+
+@app.route('/<path:filename>')
+def serve_static(filename):
+    path= os.getcwd()+ f'/{react_folder}/build'
+    return send_from_directory(path, filename)
 
 @app.route('/static/<folder>/<file>')
 def css(folder,file):
@@ -221,22 +235,6 @@ def css(folder,file):
 def video_feed():
     return camera_thread.flask_stream()
 
-@app.route('/convert/<file>')
-def convert(file):
-    convert(file)
-    return True
-
-def convert(filename):
-    dest = f'/home/james/PiSecurityCamera/output_mp4/{filename.replace("h264", "mp4")}'
-    cmd='/usr/bin/ffmpeg -i "{}" -f mp4 -vcodec copy -acodec libfaac -b:a 112k -ac 2 -y "{}"'.format(Config().video_path() + '/' + filename, dest)
-
-    out = f'./output_mp4/{filename.replace("h264", "mp4")}'
-
-    cmd = ['ffmpeg', '-i', f'./output/{filename}', '-c:v', 'libx264', '-c:a', 'aac', '-y', out]
-    subprocess.call(cmd)
-    
-    return send_from_directory('static', dest)
-
 @app.route('/video/<filename>')
 def test(filename):
     return send_from_directory('static', filename)
@@ -244,6 +242,8 @@ def test(filename):
 # Initial start
 if __name__ == '__main__':
     start_camera_init_thread()
-    start_servo_init_thread()
+
+    if (Config().get('use_servo')):
+        start_servo_init_thread()
     
     app.run(host='0.0.0.0')
