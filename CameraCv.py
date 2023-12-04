@@ -75,11 +75,11 @@ class Camera(CameraBase):
         time_stamp = super()._get_timestamp()
         self.start_duration = int(dt.datetime.now().timestamp() * 1000)
         self.should_tick = True
-        self.fourcc = cv2.VideoWriter_fourcc(*'mp4v')  # You can choose other codecs like 'MJPG', 'MP4V', etc.
+        self.fourcc = cv2.VideoWriter_fourcc(*'H264')  # You can choose other codecs like 'MJPG', 'MP4V', etc.
         video_format = 'mp4' #self.config.video_settings('format')
         video_path = self.config.build_video_path(f"{time_stamp}.{video_format}")
 
-        self.out = cv2.VideoWriter(video_path, self.fourcc, 20.0, (640, 480))  # Adjust parameters as needed
+        self.out = cv2.VideoWriter(video_path, self.fourcc, 30, (640, 480))  # Adjust parameters as needed
 
         # Creating a thumbnail for recording
         # self.snapshot(name=time_stamp, is_thumbnail=True)
@@ -108,6 +108,8 @@ class Camera(CameraBase):
         try:
             self.camera.stop()
             self.camera.stream.release()
+            self.out.release()
+            self.camera.release()
         except Exception as e:
             print("Error when closing camera on Port 1")
             print(e)

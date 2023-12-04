@@ -20,31 +20,36 @@ const App = () => {
 
     useEffect(() => {
         const test = async () => {
-            if (selectedVideo == null) {
-                return;
-            }
-    
-            // const jmuxer = new JMuxer({
-            //     node: 'h264Stream',
-            //     mode: 'video',
-            //     debug: false,
-            //     fps: fps,
-            // });
+            // if (selectedVideo == null) {
+            //     return;
+            // }
     
             const url: string = BuildUrl(config, `/video/${selectedVideo}`);
 
-            const response = await fetch(url, {
-                method: 'GET',
-              });
+            // const url = "http://192.168.0.14:3000/test2.mp4"
+
+            // const response = await fetch(url, {
+            //     method: 'GET',
+            //     mode: 'cors', // Specify CORS mode
+            //     headers: {
+            //         'Content-Type': 'video/mp4', // Adjust content type as needed
+            //         // Add any other headers as needed for your server
+            //     },
+            //   });
       
-            if (!response.ok) {
-            throw new Error(`HTTP error! Status: ${response.status}`);
-            }
+            // if (!response.ok) {
+            //     throw new Error(`HTTP error! Status: ${response.status}`);
+            // }
 
-            var blob = await response.blob();
-            console.log(blob);
+            // const videoBlob = await response.blob();
+            // console.log('Video Blob:', videoBlob);
 
-            setVideoUrl(URL.createObjectURL(blob));
+            // const turl = URL.createObjectURL(videoBlob);
+            // console.log('Video URL:', turl);
+
+            // setVideoUrl(turl);
+
+            setVideoUrl(url);
         }
 
         test();
@@ -60,6 +65,11 @@ const App = () => {
 
     return (
         <div className={'app-container'}>
+            <video id="samp" width="640" height="480" controls>
+                <source src='/test.mp4' type="video/mp4"/>
+                Your browser does not support this video format.
+            </video>
+
             <div className={'container'}>
                 <div className={'title'}> {ip} </div>
                 <div className={'title'}> {selectedVideo} </div>
@@ -67,6 +77,12 @@ const App = () => {
                     ? <LiveFeed ShowControl/> 
                     : <video className={'video-player'} controls> <source src={videoUrl} type='video/mp4'/> Your browser does not support the video tag. </video> }
             </div>
+
+            <video width="640" height="360" controls>
+                <source src={"http://192.168.0.14:5000/test2.mp4"} type="video/mp4"/>
+                Your browser does not support the video tag.
+            </video>
+
 
             <div className={'fps-slider-container'}>
                 <div> {fps} </div>

@@ -182,7 +182,6 @@ def download_video(filename):
 def view_video(filename):
     output_directory = Config().video_path()
     return send_from_directory(output_directory, filename, as_attachment=True)
-    # return send_file(f"{output_directory}/{filename}", mimetype='video/mp4')
 
 @app.route('/get/disk')
 def get_disk_space():
@@ -235,9 +234,9 @@ def css(folder,file):
 def video_feed():
     return camera_thread.flask_stream()
 
-@app.route('/video/<filename>')
-def test(filename):
-    return send_from_directory('static', filename)
+# @app.route('/video/<filename>')
+# def test(filename):
+#     return send_from_directory('static', filename)
 
 # Initial start
 if __name__ == '__main__':
