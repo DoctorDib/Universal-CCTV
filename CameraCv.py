@@ -76,7 +76,7 @@ class Camera(CameraBase):
         self.start_duration = int(dt.datetime.now().timestamp() * 1000)
         self.should_tick = True
         self.fourcc = cv2.VideoWriter_fourcc(*'H264')  # You can choose other codecs like 'MJPG', 'MP4V', etc.
-        video_format = 'mp4' #self.config.video_settings('format')
+        video_format = self.config.video_settings('cv_format')
         video_path = self.config.build_video_path(f"{time_stamp}.{video_format}")
 
         self.out = cv2.VideoWriter(video_path, self.fourcc, 30, (640, 480))  # Adjust parameters as needed
@@ -116,7 +116,7 @@ class Camera(CameraBase):
 
     # STEP 5
     def _tick(self):
-        try:
+        try:            
             super()._tick()
             cv2.waitKey(1)
 
@@ -158,7 +158,7 @@ class Camera(CameraBase):
         self.out.write(frame)
 
         # Streaming
-        format = self.config.stream_settings('format')
+        format = self.config.stream_settings('cv_format')
         _, encoded_frame = cv2.imencode(f'.{format}', frame)
         self.output.write(encoded_frame)
         

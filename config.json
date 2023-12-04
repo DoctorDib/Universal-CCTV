@@ -1,5 +1,5 @@
 {
-    "version": "2.2",
+    "version": "3.0",
     "ip": "",
     "port": 8000,
     "location": "London",
@@ -18,8 +18,9 @@
 
     "video_settings": {
         "location": "/video",
-        "format": "mp4",
-        "max_minutes": 60
+        "pi_format": "h264",
+        "cv_format": "mp4",
+        "max_minutes": 15
     },
 
     "snapshot_settings": {
@@ -33,7 +34,8 @@
     },
 
     "stream_settings": {
-        "format": "jpeg"
+        "pi_format": "h264",
+        "cv_format": "jpeg"
     },
 
     "camera_settings": {

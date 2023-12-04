@@ -15,8 +15,6 @@ export const BuildUrl = (config: Config, additional: string) => {
         return "";
     }
 
-    console.log(config);
-
     const ip = config.ip;
     const port = config.port;
     return `http://${ip}:${port}${additional}`;

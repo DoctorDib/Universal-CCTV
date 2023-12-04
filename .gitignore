@@ -6,3 +6,7 @@
 /snapshop
 
 /__pycache__/*
+
+*.mp4
+*.avi
+*.h264

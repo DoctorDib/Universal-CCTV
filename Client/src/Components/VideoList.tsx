@@ -21,7 +21,6 @@ const App = ({ setSelectedVideo, selectedVideo }: VideoList) => {
     const { config } = useContext(ConfigContext);
 
     const formatName = (name: string) => {
-        console.log(name)
         name = name.split('.')[0];
         name = name.replace('_', '-');
         

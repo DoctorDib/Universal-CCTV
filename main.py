@@ -13,7 +13,6 @@ from Config import Config
 
 import os
 import os.path
-import subprocess
 import os.path
 import psutil
 import platform
@@ -21,10 +20,8 @@ from time import sleep
 import threading
 import os
 
-camera_thread : Camera() = Camera()
+camera_thread : Camera = Camera()
 servo_thread : Servo = Servo(11)
-
-# _ntuple_diskusage = namedtuple('usage', 'total used free')
 
 app = Flask(__name__)
 CORS(app)

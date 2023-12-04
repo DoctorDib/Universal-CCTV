@@ -10,14 +10,6 @@ import threading
 from picamera import PiCamera
 import picamera as pc
 
-###########################
-# SETTINGS
-###########################
-
-# max_duration_limit_seconds = data["minutes"] * 60  # Converting to sections
-
-# os.chdir(location + savePath)
-
 currentMode = ""
 
 class Camera(CameraBase):
@@ -102,12 +94,12 @@ class Camera(CameraBase):
     # STEP 3
     def _start_recording(self):
         time_stamp = super()._get_timestamp()
-        video_format = self.config.video_settings('format')
+        video_format = self.config.video_settings('pi_format')
         video_path = self.config.build_video_path(f"{time_stamp}.{video_format}")
         self.camera.start_recording(video_path)
         
         if self.is_new_selection and not self.fixed_mode:
-            stream_format = self.config.stream_settings('format')
+            stream_format = self.config.stream_settings('pi_format')
             self.camera.start_recording(self.output, format=stream_format, splitter_port=2)
 
         self.start_duration = int(dt.datetime.now().timestamp() * 1000)

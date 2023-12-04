@@ -1,5 +1,5 @@
 
-import { useState, useEffect, useContext } from 'react';
+import { useState, useEffect, useContext, useRef } from 'react';
 import JMuxer from 'jmuxer';
 
 import VideoList from './Components/VideoList';
@@ -13,47 +13,8 @@ import ConfigContext from './Helpers/ConfigContext';
 
 const App = () => {    
     const [selectedVideo, setSelectedVideo] = useState<string | null>(null);
-    const [fps, setFps] = useState<number>(20);
-    const [videoUrl, setVideoUrl] = useState<string>("");
     const [ip, setIp] = useState<string>("");
     const { config, fetchData } = useContext(ConfigContext);
-
-    useEffect(() => {
-        const test = async () => {
-            // if (selectedVideo == null) {
-            //     return;
-            // }
-    
-            const url: string = BuildUrl(config, `/video/${selectedVideo}`);
-
-            // const url = "http://192.168.0.14:3000/test2.mp4"
-
-            // const response = await fetch(url, {
-            //     method: 'GET',
-            //     mode: 'cors', // Specify CORS mode
-            //     headers: {
-            //         'Content-Type': 'video/mp4', // Adjust content type as needed
-            //         // Add any other headers as needed for your server
-            //     },
-            //   });
-      
-            // if (!response.ok) {
-            //     throw new Error(`HTTP error! Status: ${response.status}`);
-            // }
-
-            // const videoBlob = await response.blob();
-            // console.log('Video Blob:', videoBlob);
-
-            // const turl = URL.createObjectURL(videoBlob);
-            // console.log('Video URL:', turl);
-
-            // setVideoUrl(turl);
-
-            setVideoUrl(url);
-        }
-
-        test();
-    }, [selectedVideo]);
 
     useEffect(() => { 
         if (config !== null) {
@@ -65,28 +26,15 @@ const App = () => {
 
     return (
         <div className={'app-container'}>
-            <video id="samp" width="640" height="480" controls>
-                <source src='/test.mp4' type="video/mp4"/>
-                Your browser does not support this video format.
-            </video>
-
             <div className={'container'}>
                 <div className={'title'}> {ip} </div>
                 <div className={'title'}> {selectedVideo} </div>
-                { selectedVideo == null 
+
+                {
+                    selectedVideo === null
                     ? <LiveFeed ShowControl/> 
-                    : <video className={'video-player'} controls> <source src={videoUrl} type='video/mp4'/> Your browser does not support the video tag. </video> }
-            </div>
-
-            <video width="640" height="360" controls>
-                <source src={"http://192.168.0.14:5000/test2.mp4"} type="video/mp4"/>
-                Your browser does not support the video tag.
-            </video>
-
-
-            <div className={'fps-slider-container'}>
-                <div> {fps} </div>
-                <input type="range" min="5" max="120" value={fps} onChange={(event) => setFps(Number(event.target.value))} className={'slider'} />
+                    : <VideoPlayer selectedVideo={selectedVideo}/>
+                }
             </div>
 
             <SnapshotList/>
@@ -99,6 +47,102 @@ const App = () => {
             </div>
         </div>
     );
-}
+};
 
 export default App;
+
+interface VideoPlayerInterface {
+    selectedVideo: string | null,
+}
+
+const VideoPlayer = ({ selectedVideo }: VideoPlayerInterface) => {
+    const [playbackRate, setPlaybackRate] = useState<number>(0);
+    const [videoUrl, setVideoUrl] = useState<string>("");
+    const [isMp4, setIsMp4] = useState<boolean>(false);
+    const [key, setKey] = useState<number>(0); // Add key state
+    const { config, fetchData } = useContext(ConfigContext);
+    const videoPlayer = useRef(null);
+
+    const onIncreasePlayRate = () => {
+        if (playbackRate > 4) {
+            setPlaybackRate(4);
+        } else {
+            setPlaybackRate(playbackRate + 0.25);
+        }
+    };
+    const onResetPlayRate = () => setPlaybackRate(1);
+    const onDecreasePlayRate = () => {
+        if (playbackRate < 0.25) {
+            setPlaybackRate(0.25);
+        } else {
+            setPlaybackRate(playbackRate - 0.25);
+        }
+    };
+
+    useEffect(() => {
+        if (videoPlayer !== null) {
+            videoPlayer.current.playbackRate = playbackRate;
+        }
+    }, [playbackRate]);
+
+    useEffect(() => {
+        const TriggerVideo = async () => {
+            if (selectedVideo === null) {
+                return;
+            }
+
+            // Resetting playback rate to default
+            setPlaybackRate(1);
+
+            var isMp4Format: boolean = selectedVideo.includes('.mp4');
+            setIsMp4(isMp4Format);
+
+            const url: string  = BuildUrl(config, `/video/${selectedVideo}`);
+            if (isMp4Format) {
+                setVideoUrl(url);
+            } else {
+                // Raspberry Pi
+                const jmuxer = new JMuxer({
+                    node: 'h264Stream',
+                    mode: 'video',
+                    debug: false,
+                    fps: 24,
+                });
+        
+                fetch(url)
+                    .then(async (response) => {
+                        jmuxer.feed({
+                            video: new Uint8Array(await response.arrayBuffer()),
+                        });      
+                    });
+            }
+
+            // Increment key to force remount of the video element
+            setKey((prevKey) => prevKey + 1);
+        }
+
+        TriggerVideo();
+    }, [selectedVideo]);
+
+    useEffect(() => { fetchData(); }, []);
+
+    return (
+        <div>
+            {isMp4 ? (
+                <video key={key} className={'video-player'} controls ref={videoPlayer}>
+                    <source src={videoUrl} type='video/mp4'/>
+                    Your browser does not support the video tag.
+                </video>
+            ) : (
+                <video key={key} id="h264Stream" className={'video-player'} controls ref={videoPlayer}>
+                    <source src={videoUrl}/>
+                    Your browser does not support the video tag.
+                </video>
+            )}
+
+            <button onClick={() => onIncreasePlayRate()}> + </button>
+            <button onClick={() => onResetPlayRate()}> * </button>
+            <button onClick={() => onDecreasePlayRate()}> - </button>
+        </div>
+    );
+};
