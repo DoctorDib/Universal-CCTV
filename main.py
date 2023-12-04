@@ -1,4 +1,3 @@
-import cv2
 from flask import Flask, jsonify, render_template, send_from_directory, send_file
 from flask_cors import CORS
 
@@ -49,14 +48,6 @@ def response(has_success, description="", data={}):
         "description": description,
         "data": data,
     })
-
-def generate_frames():
-    while camera_thread.is_running:
-        if cv2.waitKey(1) & 0xFF == ord('q'): 
-            break
-        frame = camera_thread.get_frame()
-        yield (b'--FRAME\r\n'
-               b'Content-Type: image/jpeg\r\n\r\n' + frame + b'\r\n')
 
 @app.route('/ping')
 def ping():
