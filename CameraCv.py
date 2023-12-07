@@ -30,7 +30,7 @@ class Camera(CameraBase):
         super().__init__(fixed_mode)
         # Camera
         self.camera = cv2.VideoCapture(self.config.video_settings('source')) # TODO Change here 
-
+        
         self._set_up_camera()
         self._start_web_server()
         
@@ -147,6 +147,15 @@ class Camera(CameraBase):
         # Create a black bar at the top middle of the frame
         frame[0:bar_height, :] = bar_color
 
+        # Rotate image
+        rotation = self.config.video_settings('rotation')
+        if (rotation == 90):
+            frame = cv2.rotate(frame, cv2.ROTATE_90_CLOCKWISE)
+        elif(rotation == 180):
+            frame = cv2.rotate(frame, cv2.ROTATE_180)
+        elif (rotation == 270):
+            frame = cv2.rotate(frame, cv2.ROTATE_90_COUNTERCLOCKWISE)
+            
         font_scale = .5
         font_thickness = 1
 
