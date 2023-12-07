@@ -24,7 +24,8 @@
         "max_minutes": 15,
         "resolution": "640X480",
         "framerate": 24,
-        "rotation": 0
+        "rotation": 0,
+        "source": 1
     },
 
     "snapshot_settings": {

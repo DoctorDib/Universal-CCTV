@@ -27,12 +27,9 @@ class Camera(CameraBase):
         return Response(self.generate_frames(), mimetype='multipart/x-mixed-replace; boundary=FRAME')
 
     def __init__(self, fixed_mode = False):
-        # Camera
-        self.camera = cv2.VideoCapture(0) # TODO Change here 
-
-        self.test = super()
-
         super().__init__(fixed_mode)
+        # Camera
+        self.camera = cv2.VideoCapture(self.config.video_settings('source')) # TODO Change here 
 
         self._set_up_camera()
         self._start_web_server()
