@@ -44,6 +44,18 @@ class Config():
         base = self.get('thumbnail_settings')
         return base[key]
     
+    def get_video_settings(self, mode, key):
+        base = self.camera_settings(mode)
+        value = base[key]
+
+        # TODO - Add exception control
+        if (value == "not_in_use"):
+            base = self.get('video_settings')
+            # Grabbing the base video settings
+            value = base[key]
+
+        return value
+    
     ## CUSTOM SPECIFIC
     def video_path(self):
         return os.getcwd() + self.video_settings('location')

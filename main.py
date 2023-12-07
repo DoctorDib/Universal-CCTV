@@ -208,7 +208,7 @@ def index():
 def serve_static(filename):
     path= os.getcwd()+ f'/{react_folder}/build'
     return send_from_directory(path, filename)
-
+                                                                    
 @app.route('/static/<folder>/<file>')
 def css(folder,file):
     ''' User will call with with thier id to store the symbol as registered'''
@@ -222,9 +222,13 @@ def css(folder,file):
 def video_feed():
     return camera_thread.flask_stream()
 
-# @app.route('/video/<filename>')
-# def test(filename):
-#     return send_from_directory('static', filename)
+@app.route('/get/resolution')
+def get_resolution():
+    return Config().video_settings('resolution')
+
+@app.route('/get/framerate')
+def get_framerate():
+    return Config().video_settings('framerate')
 
 # Initial start
 if __name__ == '__main__':

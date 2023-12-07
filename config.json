@@ -20,7 +20,11 @@
         "location": "/video",
         "pi_format": "h264",
         "cv_format": "mp4",
-        "max_minutes": 15
+        "codec": "avc1",
+        "max_minutes": 15,
+        "resolution": "640X480",
+        "framerate": 24,
+        "rotation": 0
     },
 
     "snapshot_settings": {
@@ -40,8 +44,8 @@
 
     "camera_settings": {
         "morning": {
-            "resolution": "640X480",
-            "framerate": 24,
+            "resolution": "not_in_use",
+            "framerate": "not_in_use",
             "awb_mode": "sunlight",
             "exposure_mode": "auto",
             "brightness": 50,
@@ -53,12 +57,12 @@
             "meter_mode": "average",
             "video_stabilization": false,
             "sensor_mode": 0,
-            "rotation": 0
+            "rotation": "not_in_use"
         },
 
         "day": {
-            "resolution": "640X480",
-            "framerate": 24,
+            "resolution": "not_in_use",
+            "framerate": "not_in_use",
             "awb_mode": "auto",
             "exposure_mode": "auto",
             "brightness": 60,
@@ -70,11 +74,11 @@
             "meter_mode": "average",
             "video_stabilization": false,
             "sensor_mode": 0,
-            "rotation": 0
+            "rotation": "not_in_use"
         },
 
         "night": {
-            "resolution": "640X480",
+            "resolution": "not_in_use",
             "framerate": 12,
             "awb_mode": "auto",
             "exposure_mode": "night",
@@ -87,7 +91,7 @@
             "meter_mode": "average",
             "video_stabilization": false,
             "sensor_mode": 0,
-            "rotation": 0
+            "rotation": "not_in_use"
         }
     }
 }

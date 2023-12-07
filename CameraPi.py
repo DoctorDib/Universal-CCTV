@@ -37,8 +37,10 @@ class Camera(CameraBase):
     def _set_up_camera(self):
         super()._set_up_camera()
         
-        self.camera.resolution = self.selected_setting["resolution"]
-        self.camera.framerate = self.selected_setting["framerate"]
+        self.camera.resolution = self.config.get_video_settings(self.selection, 'resolution')
+        self.camera.framerate = self.config.get_video_settings(self.selection, 'framerate')
+        self.camera.rotation = self.config.get_video_settings(self.selection, 'rotation ')
+
         self.camera.awb_mode = self.selected_setting["awb_mode"]
         self.camera.exposure_mode = self.selected_setting["exposure_mode"]
         self.camera.brightness = self.selected_setting["brightness"]
@@ -50,7 +52,6 @@ class Camera(CameraBase):
         self.camera.meter_mode = self.selected_setting["meter_mode"]
         self.camera.video_stabilization = self.selected_setting["video_stabilization"]
         self.camera.sensor_mode = self.selected_setting["sensor_mode"]
-        self.camera.rotation = self.selected_setting["rotation"]
 
         try:
             self.camera.annotate_background = pc.Color(self.config.text_settings("background_color"))
