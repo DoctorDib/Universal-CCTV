@@ -8,6 +8,7 @@ import LiveFeed from './LiveFeed';
 import StorageController from './StorageController';
 import { BuildUrl, FetchData, } from '../Helpers/helper';
 import ConfigContext from '../Helpers/ConfigContext';
+import { SocketContext } from '../Helpers/SocketContext';
 
 interface VideoList {
     setSelectedVideo: (filename: string | null) => void,
@@ -19,6 +20,7 @@ const App = ({ setSelectedVideo, selectedVideo }: VideoList) => {
     const [previewSelection, setPreviewSelection] = useState<string | null>(null);
     const [imageUrl, setImageUrl] = useState<string>("");
     const { config } = useContext(ConfigContext);
+    const { videoFiles } = useContext(SocketContext);
 
     const formatName = (name: string) => {
         name = name.split('.')[0];
@@ -31,24 +33,28 @@ const App = ({ setSelectedVideo, selectedVideo }: VideoList) => {
     const loadVideo = (name: string) => setSelectedVideo(name);
 
     useEffect(() => {
-        const getFiles = async () => {
-            try {
-                const response = await FetchData(config, "/get_files");
+        setVideoList(videoFiles);
+    }, [videoFiles])
 
-                // Check if the request was successful (status code 200)
-                if (response.success) {
-                    var data = response.data.files;
-                    setVideoList(data);
-                } else {
-                    console.error(`Error: ${response.status}`);
-                }
-            } catch (error) {
-                console.error('Error fetching data:', error);
-            }
-        };
+    // useEffect(() => {
+    //     const getFiles = async () => {
+    //         try {
+    //             const response = await FetchData(config, "/get_files");
+
+    //             // Check if the request was successful (status code 200)
+    //             if (response.success) {
+    //                 var data = response.data.files;
+    //                 setVideoList(data);
+    //             } else {
+    //                 console.error(`Error: ${response.status}`);
+    //             }
+    //         } catch (error) {
+    //             console.error('Error fetching data:', error);
+    //         }
+    //     };
     
-        getFiles();
-    }, [config]); // Empty dependency array to run the effect only once when the component mounts
+    //     getFiles();
+    // }, [config]); // Empty dependency array to run the effect only once when the component mounts
 
     useEffect(() => {
         const getUrl = () => {

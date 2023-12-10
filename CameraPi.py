@@ -75,6 +75,9 @@ class Camera(CameraBase):
 
     def shutdown(self):
         self._stop_recording()
+        self.info.is_recording = False
+        self.info.is_streaming = False
+        self.should_tick = False
 
     def restart(self):
         self._stop_recording()
@@ -88,9 +91,11 @@ class Camera(CameraBase):
         path = super().snapshot(name, is_thumbnail)
         # Custom Capture method
         self.camera.capture(path)
+        self.info.get_snapshot_files()
     
     def delete_snapshot(self, name: str):
         super().delete_snapshot(name)
+        self.info.get_snapshot_files()
 
     # STEP 3
     def _start_recording(self):

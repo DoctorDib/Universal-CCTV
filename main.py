@@ -1,5 +1,7 @@
-from flask import Flask, jsonify, render_template, send_from_directory, send_file
+from flask import Flask, jsonify, render_template, send_from_directory, send_file, request
+from flask_socketio import SocketIO, emit
 from flask_cors import CORS
+from Info import Info
 
 try:
     # Raspberry Pi camera
@@ -14,8 +16,6 @@ from Config import Config
 import os
 import os.path
 import os.path
-import psutil
-import platform
 from time import sleep
 import threading
 import os
@@ -24,14 +24,15 @@ camera_thread : Camera = Camera()
 servo_thread : Servo = Servo(11)
 
 app = Flask(__name__)
-CORS(app)
+CORS(app, resources={r"/*":{"origins":"*"}})
+socketio = SocketIO(app, cors_allowed_origins="*", async_mode='threading')
 
 react_folder = 'Client'
 directory= f'{os.getcwd()}/{react_folder}/build/static'
 
-def start_camera_init_thread():
+def start_camera_init_thread(info_instance):
     global camera_init_thread
-    camera_init_thread = threading.Thread(target=camera_thread.initialise_camera)
+    camera_init_thread = threading.Thread(target=camera_thread.initialise_camera, args=(info_instance,))
     camera_init_thread.start()
 
 def start_servo_init_thread():
@@ -52,46 +53,29 @@ def ping():
 
 @app.route('/heartbeat')
 def heart_beat():
-    success = camera_thread.is_running
+    success = False#camera_thread.is_running
     return response(success, "Alive and beating" if success else "Dead")
 
 ## CAMERA API
 
-@app.get('/start')
-def start_camera():
-    if camera_thread.is_running:
-        return response(False, "Camera already running")
-
-    start_camera_init_thread()
-
-    if (Config().get('use_servo')):
-        start_servo_init_thread()
-    
+@app.get('/toggle/stream')
+def toggle_stream():
+    camera_thread.toggle_streaming()
+    emit('is_streaming', info.is_streaming, broadcast=True)
     return response(True, "Camera initialization started")
+
+@app.get('/toggle/recording')
+def toggle_recording():
+    camera_thread.toggle_recording()
+    emit('is_recording', info.is_recording, broadcast=True)
+    return response(True, "Camera has stopped")
 
 @app.get('/restart')
 def restart_camera():
-    stop_camera()
-    sleep(0.5)
-    print("starting camera")
-    start_camera_init_thread()
+    # stop_camera()
+    # sleep(0.5)
+    # start_camera()
     return response(True, "Camera restarted")
-
-@app.get('/stop')
-def stop_camera():
-    if not camera_thread.is_running:
-        return response(False, "Camera has already stopped")
-
-    # Stop the camera initialization thread gracefully
-    camera_thread.shutdown()
-
-    print("Shutting down camera thread")
-    global camera_init_thread
-    if camera_init_thread:
-        camera_init_thread.join()  # Wait for the camera_init_thread to finish
-
-    print("Fin shutting down")
-    return response(True, "Camera has stopped")
 
 # SNAPSHOTS
 
@@ -103,10 +87,8 @@ def take_snapshot():
 
 @app.route('/get/snapshot_list')
 def get_snapshot_list():
-    path = Config().snapshot_path()
-    picture_files = [f for f in os.listdir(path) if os.path.isfile(os.path.join
-    (path, f))]
-    return response(True, "Image List", data={ "pictures": picture_files })
+    files = info.get_snapshot_files()
+    return response(True, "Image List", data={ "pictures": files })
 
 @app.route('/get/snapshot/<filename>')
 def get_snapshot(filename):
@@ -150,9 +132,8 @@ def get_servo_position_percentage():
 
 @app.get('/get_files')
 def get_files():
-    output_directory = Config().video_path()
-    file_list = os.listdir(output_directory)
-    return response(True, data={ "files": file_list })
+    files = info.get_video_files()
+    return response(True, data={ "files": files })
 
 @app.route('/videos')
 def videos_page():
@@ -173,27 +154,7 @@ def view_video(filename):
 
 @app.route('/get/disk')
 def get_disk_space():
-    system_platform = platform.system()
-
-    if system_platform == 'Windows':
-        partitions = psutil.disk_partitions()
-        for partition in partitions:
-            if 'fixed' in partition.opts.lower():
-                disk_usage = psutil.disk_usage(partition.mountpoint)
-                total_space = disk_usage.total
-                available_space = disk_usage.free
-                break
-    elif system_platform == 'Linux':
-        disk_usage = psutil.disk_usage('/')
-        total_space = disk_usage.total
-        available_space = disk_usage.free
-    else:
-        print(f"Unsupported platform: {system_platform}")
-        return response(False, f"Unsupported platform to grab disk space: {system_platform}")
-
-    total_gb = total_space / (1024 ** 3)
-    available_gb = available_space / (1024 ** 3)
-
+    (total_gb, available_gb) = info.get_disk_space()
     return response(True, data={ "total": total_gb, "availiable": available_gb })
 # CLIENT API
 
@@ -212,7 +173,6 @@ def serve_static(filename):
 @app.route('/static/<folder>/<file>')
 def css(folder,file):
     ''' User will call with with thier id to store the symbol as registered'''
-    
     path = folder+'/'+file
     return send_from_directory(directory=directory,path=path)
 
@@ -230,11 +190,42 @@ def get_resolution():
 def get_framerate():
     return Config().video_settings('framerate')
 
+## WEB SOCKET STUFF
+@socketio.on('connect')
+def handle_connect():
+    info.new_client(request.sid)
+    emit("welcome_package", info.welcome_package(), broadcast=True)
+
+@socketio.on('disconnect')
+def handle_disconnect():
+    info.remove_client(request.sid)
+    emit("welcome_package", info.welcome_package(), broadcast=True)
+
+@socketio.on('action')
+def handle_custom_event(action):
+    print('Received action from client:', action)
+    _HANDLE_ACTION(action)
+
+def _HANDLE_ACTION(action: str):
+    match action:
+        case "toggle_stream":
+            toggle_stream()
+        case "toggle_recording":
+            toggle_recording()
+
 # Initial start
 if __name__ == '__main__':
-    start_camera_init_thread()
+    info: Info = Info(socketio)
+
+    start_camera_init_thread(info)
 
     if (Config().get('use_servo')):
         start_servo_init_thread()
     
-    app.run(host='0.0.0.0')
+    try:
+        socketio.run(app, host='0.0.0.0', port=5000)
+    except KeyboardInterrupt:
+        print("Flask application terminated by user.")
+    finally:
+        camera_thread.shutdown()
+        camera_init_thread.join()

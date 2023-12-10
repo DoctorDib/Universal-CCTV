@@ -3,7 +3,8 @@
 /Client/node_modules
 /video
 /videos
-/snapshop
+/thumbnails
+/snapshot
 
 /__pycache__/*
 

@@ -1,21 +1,25 @@
+from Clock import Clock
 from Config import Config
 from Helper import FileManager, Helper
+from Info import Info
 from Streaming import StreamingHandler, StreamingOutput, StreamingServer
 
 from time import gmtime, strftime, sleep
 
 import datetime as dt
 import os
+import threading
 
 class CameraBase():
-    should_tick = False
-    settingSelection = ""
-    is_running = True
+    should_tick: bool = False
+    settingSelection: str = ""
     
     config: Config
     helper: Helper
     output: StreamingOutput
     file_manager: FileManager
+    info: Info
+    clock: Clock
     
     def generate_frames(self):
         pass
@@ -30,6 +34,8 @@ class CameraBase():
         self.helper = Helper()
         self.output = StreamingOutput()
         self.file_manager = FileManager()
+        self.clock = Clock()
+        self.info = threading.Lock()
 
         # Create video folder if it does not exist
         self.config.create_directory(self.config.video_path())
@@ -40,7 +46,7 @@ class CameraBase():
 
         self.streaming_handler = StreamingHandler
         self.streaming_handler.output = self.output  # Set output_instance as a class attribute
-        self.streaming_handler.is_running = self.is_running  # Set output_instance as a class attribute
+        # self.streaming_handler.is_running = self.is_running  # Set output_instance as a class attribute
 
     # STEP 1
     def _set_up_camera(self):
@@ -55,15 +61,29 @@ class CameraBase():
             resp = self.helper.checkSun(settingSelection[0])
             self.is_new_selection = resp[0]
             self.selection = resp[1]
-
             self.selected_setting = self.config.camera_settings(self.selection)
 
     # STEP 2
-    def initialise_camera(self):
+    
+    def toggle_recording(self):
+        with self.info.lock:
+            self.info.is_recording = not self.info.is_recording
+            self.info.socketio.emit('is_recording', self.info.is_recording, namespace='/')
+        # self._check_should_tick_status()
+    def toggle_streaming(self):
+        with self.info.lock:
+            self.info.is_streaming = not self.info.is_streaming
+            self.info.socketio.emit('is_streaming', self.info.is_streaming, namespace='/')
+        # self._check_should_tick_status()
+    def _check_should_tick_status(self):
+        pass
+
+    def initialise_camera(self, info):
+        self.info = info
         version = self.config.get('version')
         print(f"Initialising {version}")
 
-        self.is_running = True
+        # self.is_running = True
 
     def shutdown(self):
         self._stop_recording()
@@ -85,7 +105,7 @@ class CameraBase():
         return path
     
     def delete_snapshot(self, name: str):
-        file_path = self.config.snapshot_path(name)
+        file_path = self.config.build_snapshot_path(name)
         if os.path.exists(file_path):
             os.remove(file_path)
 
@@ -110,9 +130,13 @@ class CameraBase():
             self._stop_recording()
 
     # STEP 5.1
+    def _start_recording(self):
+        self.clock.start()
+
     def _stop_recording(self):
-        self.should_tick = False
-        self.is_running = False
+        self.clock.stop()
+        # self.should_tick = False
+        # self.is_running = False
 
     # STEP 5
     def _tick(self):
@@ -124,6 +148,6 @@ class CameraBase():
         return strftime("%Y-%m-%d_%H-%M-%S", gmtime())
 
     def _kill(self):
-        self.is_running = False
+        # self.is_running = False
         self.should_tick = False
         os._exit(0)

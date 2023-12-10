@@ -1,4 +1,5 @@
 from CameraBase import CameraBase
+from Info import Info
 from Streaming import StreamingServer
 from flask import Response
 
@@ -11,10 +12,8 @@ import cv2
 currentMode = ""
 
 class Camera(CameraBase):
-    test: super
-
     def generate_frames(self):
-        while self.is_running:
+        while True:
             if cv2.waitKey(1) & 0xFF == ord('q'): 
                 break   
             with self.output.condition:
@@ -28,50 +27,91 @@ class Camera(CameraBase):
 
     def __init__(self, fixed_mode = False):
         super().__init__(fixed_mode)
-        # Camera
-        self.camera = cv2.VideoCapture(self.config.video_settings('source')) # TODO Change here 
-        
+
         self._set_up_camera()
         self._start_web_server()
-        
+
+    def toggle_recording(self):
+        super().toggle_recording()
+        if (self.info.is_recording):
+            self._start_recording()
+        else:
+            self._stop_recording()
+
+        self._check_should_tick_status()
+
+    def toggle_streaming(self):
+        super().toggle_streaming()        
+        self._check_should_tick_status()
+
+    def _check_should_tick_status(self):
+        super()._check_should_tick_status()
+        if (self.should_tick is False and (self.info.is_recording or self.info.is_streaming)):
+            self.should_tick = True
+            self.initialise_camera(self.info)
+        elif (self.should_tick is True and (not self.info.is_recording and not self.info.is_streaming)):
+            self.should_tick = False
+
     # STEP 1
     def _set_up_camera(self):
         # Potential custom code?
         super()._set_up_camera()
 
     # STEP 2
-    def initialise_camera(self):
-        super().initialise_camera()
-        self._start_recording()
-        # Tick away for ever
-        while(self.is_running):
-            # Only tick if active
-            if (self.should_tick):
-                self._tick()
+    def initialise_camera(self, info):
+        super().initialise_camera(info)
 
+        info.lock_controls()
+
+        # Preparing the camera to be used once again
+        self.camera = cv2.VideoCapture(self.config.video_settings('source')) # TODO Change here 
+        
+        self.info = info
+
+        if (self.info.control_lock_state):
+            self.info.unlock_controls()
+
+        # Tick away for ever
+        while(self.should_tick):
+            self._tick()
+        
     def shutdown(self):
+        self.info.is_recording = False
+        self.info.is_streaming = False
+        self.should_tick = False
+
+        self.server.shutdown()
+        self.serverThread.join()
+
         self._stop_recording()
 
     def restart(self):
-        self._stop_recording()
+        if (self.info.is_recording):
+            self._stop_recording()
+
+        self.clock.reset()
         sleep(.5) # Waiting for camera to fully shutdown
         self._set_up_camera()
         # Giving it time to catch up and set up camera
         sleep(.5)
-        self.initialise_camera()
+        self.initialise_camera(self.info)
 
     def snapshot(self, name: str = None, is_thumbnail: bool = False):
         path = super().snapshot(name, is_thumbnail)
-        # TODO - Add custom snap shot capture
+        frame = self.get_frame()
+        if (frame is None):
+            return
+        cv2.imwrite(path, frame)
+        self.info.get_snapshot_files()
     
     def delete_snapshot(self, name: str):
         super().delete_snapshot(name)
+        self.info.get_snapshot_files()
 
     # STEP 3
     def _start_recording(self):
         time_stamp = super()._get_timestamp()
         self.start_duration = int(dt.datetime.now().timestamp() * 1000)
-        self.should_tick = True
 
         # Getting video settings
         video_format = self.config.video_settings('cv_format')
@@ -83,10 +123,14 @@ class Camera(CameraBase):
         video_path = self.config.build_video_path(f"{time_stamp}.{video_format}")
         print(resolution)
         resolution_input = (int(resolution[0]), int(resolution[1]))
-        self.out = cv2.VideoWriter(video_path, self.fourcc, framerate, resolution_input)  # Adjust parameters as needed
 
+        self.out = cv2.VideoWriter(video_path, self.fourcc, framerate, resolution_input)  
+        
+        with self.info.lock:
+            self.info.get_video_files()
+            
         # Creating a thumbnail for recording
-        # self.snapshot(name=time_stamp, is_thumbnail=True)
+        self.snapshot(name=time_stamp, is_thumbnail=True)
     
     # STEP 4
     def _start_web_server(self):
@@ -99,6 +143,7 @@ class Camera(CameraBase):
             # Pass the StreamingOutput instance to StreamingHandler
             self.server = StreamingServer((self.config.get('ip'), self.config.get('port')), self.streaming_handler)
             self.server.serve_forever()
+            
         except KeyboardInterrupt:
             print("KeyboardInterrupt: Stopping the server.")
             self._kill()
@@ -110,10 +155,13 @@ class Camera(CameraBase):
         super()._stop_recording()
 
         try:
-            self.camera.stop()
-            self.camera.stream.release()
-            self.out.release()
-            self.camera.release()
+            if (self.out is not None):
+                self.out.release()
+            if (self.camera is not None):
+                self.camera.release()
+
+            with self.info.lock:
+                self.info.get_video_files()
         except Exception as e:
             print("Error when closing camera on Port 1")
             print(e)
@@ -122,21 +170,48 @@ class Camera(CameraBase):
     def _tick(self):
         try:            
             super()._tick()
+            
             cv2.waitKey(1)
 
-            self.get_frame()
+            frame = self.get_frame()
 
-            current_duration = int(dt.datetime.now().timestamp() * 1000)
+            if (frame is None):
+                return
 
-            if (current_duration - self.start_duration) > ((self.config.video_settings('max_minutes') * 60) * 1000):
+            # Saving recording
+            if (self.info.is_recording):
+                self.out.write(frame)
+
+            # Streaming
+            if (self.info.is_streaming):
+                format = self.config.stream_settings('cv_format')
+                _, encoded_frame = cv2.imencode(f'.{format}', frame)
+                self.output.write(encoded_frame)
+
+            if (self.clock.check_bounds(self.config.video_settings('max_minutes'))):
                 self.restart()
         except KeyboardInterrupt:
             print("KeyboardInterrupt: Stopping the camera and exiting.")
             self._kill()
 
     def get_frame (self):
+        if (not self.info.is_streaming and not self.info.is_recording):
+            return
+
         _, frame = self.camera.read()
+
+        if (frame is None):
+            return None
         
+        # Rotate image
+        rotation = self.config.video_settings('rotation')
+        if (rotation == 90):
+            frame = cv2.rotate(frame, cv2.ROTATE_90_CLOCKWISE)
+        elif(rotation == 180):
+            frame = cv2.rotate(frame, cv2.ROTATE_180)
+        elif (rotation == 270):
+            frame = cv2.rotate(frame, cv2.ROTATE_90_COUNTERCLOCKWISE)
+
         # Get the height and width of the frame
         height, width, _ = frame.shape
 
@@ -147,15 +222,6 @@ class Camera(CameraBase):
         # Create a black bar at the top middle of the frame
         frame[0:bar_height, :] = bar_color
 
-        # Rotate image
-        rotation = self.config.video_settings('rotation')
-        if (rotation == 90):
-            frame = cv2.rotate(frame, cv2.ROTATE_90_CLOCKWISE)
-        elif(rotation == 180):
-            frame = cv2.rotate(frame, cv2.ROTATE_180)
-        elif (rotation == 270):
-            frame = cv2.rotate(frame, cv2.ROTATE_90_COUNTERCLOCKWISE)
-            
         font_scale = .5
         font_thickness = 1
 
@@ -167,14 +233,8 @@ class Camera(CameraBase):
         text_y = int(bar_height / 2) + int(text_size[1] / 2)
         cv2.putText(frame, text, (text_x, text_y), font, font_scale, (255, 255, 255), font_thickness, cv2.LINE_AA)
 
-        # Saving recording
-        self.out.write(frame)
+        return frame
 
-        # Streaming
-        format = self.config.stream_settings('cv_format')
-        _, encoded_frame = cv2.imencode(f'.{format}', frame)
-        self.output.write(encoded_frame)
-        
     def _kill(self):
         self._stop_recording()
         super()._kill()
