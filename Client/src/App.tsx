@@ -1,5 +1,6 @@
 
 import { useState, useEffect, useContext, useRef } from 'react';
+import { FaEye } from 'react-icons/fa';
 import JMuxer from 'jmuxer';
 
 import VideoList from './Components/VideoList';
@@ -29,10 +30,11 @@ const App = () => {
     return (
         <div className={'app-container'}>
             <div className={'container'}>
-                <div className={'title'}> {ip} </div>
+                <div className={'viewer'}> 
+                    <FaEye/>
+                    <div> { clientCount } </div>
+                </div>
                 <div className={'title'}> {selectedVideo} </div>
-
-                <div className={'title'}> {clientCount} </div>
 
                 {
                     selectedVideo === null
@@ -124,7 +126,7 @@ const VideoPlayer = ({ selectedVideo }: VideoPlayerInterface) => {
 
             // Increment key to force remount of the video element
             setKey((prevKey) => prevKey + 1);
-        }
+        };
 
         TriggerVideo();
     }, [selectedVideo]);

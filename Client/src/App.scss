@@ -14,6 +14,18 @@
     .container {
         max-width: 50vw;
 
+        .viewer {
+            color: white;
+            font-size: 25px;
+            margin: 10px;
+            display: flex;
+
+            div {
+                font-size: 20px;
+                margin: 5px;
+            }
+        }
+
         .title {
             font-size: 38px;
             color: white;
@@ -24,5 +36,5 @@
         .video-player {
             width: 100%;
         }
-    }   
+    } 
 }

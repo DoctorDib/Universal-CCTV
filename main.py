@@ -207,11 +207,13 @@ def handle_custom_event(action):
     _HANDLE_ACTION(action)
 
 def _HANDLE_ACTION(action: str):
-    match action:
-        case "toggle_stream":
-            toggle_stream()
-        case "toggle_recording":
-            toggle_recording()
+    if action == "toggle_stream":
+        toggle_stream()
+    elif action == "toggle_recording":
+        toggle_recording()
+    else:
+        # Handle the case when action doesn't match any known values
+        print("Unknown action:", action)
 
 # Initial start
 if __name__ == '__main__':
