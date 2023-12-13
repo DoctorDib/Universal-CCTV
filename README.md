@@ -22,3 +22,11 @@ Hardware:
 Software: 
  - Raspbian Stretch with desktop
  - Python 3
+
+
+
+
+
+
+
+https://linuxhint.com/install-h264-decoder-ubuntu/

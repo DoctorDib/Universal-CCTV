@@ -6,11 +6,14 @@ from Info import Info
 try:
     # Raspberry Pi camera
     from CameraPi import Camera
+    from Servo import Servo
+    servo_thread : Servo = Servo(11)
 except:
     # Anything else that's not a Raspberry Pi Camera
     from CameraCv import Camera
+    servo_thread = None
     
-from Servo import Servo
+
 from Config import Config
 
 import os
@@ -21,7 +24,7 @@ import threading
 import os
 
 camera_thread : Camera = Camera()
-servo_thread : Servo = Servo(11)
+
 
 app = Flask(__name__)
 CORS(app, resources={r"/*":{"origins":"*"}})
@@ -114,6 +117,9 @@ def get_thumbnail(filename):
 
 @app.get('/move/<int:percentage>')
 def ser_servo(percentage):
+    if (servo_thread is None):
+        return response(False, "Servo class not active or available")
+    
     try:
         servo_thread.move(percentage)
     except Exception as e:
@@ -122,10 +128,16 @@ def ser_servo(percentage):
 
 @app.get('/get_position')
 def get_servo_position():
+    if (servo_thread is None):
+        return response(False, "Servo class not active or available")
+    
     return response(True, data={ "position": servo_thread.current_position })
 
 @app.get('/get_percentage')
 def get_servo_position_percentage():
+    if (servo_thread is None):
+        return response(False, "Servo class not active or available")
+    
     return response(True, data={ "position": servo_thread.percentage })
 
 ## FILE MANAGER API

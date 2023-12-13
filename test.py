@@ -12,7 +12,7 @@ height = int(cap.get(cv2.CAP_PROP_FRAME_HEIGHT))
 fps = 30  # Adjust the frames per second as needed
 
 # Define the codec and create a VideoWriter object
-fourcc = cv2.VideoWriter_fourcc(*'avc1')
+fourcc = cv2.VideoWriter_fourcc(*'vp09')
 out = cv2.VideoWriter('output_video.mp4', fourcc, fps, (width, height))
 
 while True:

@@ -20,7 +20,7 @@
         "location": "/video",
         "pi_format": "h264",
         "cv_format": "mp4",
-        "codec": "avc1",
+        "codec": "vp09",
         "max_minutes": 15,
         "resolution": "640X480",
         "framerate": 24,
