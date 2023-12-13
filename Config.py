@@ -47,7 +47,7 @@ class Config():
     def get_resolution(self):
         rotation = self.config.video_settings('rotation')
         resolution = self.config.video_settings('resolution').lower().split('x')
-        if (rotation is 90 or 270):
+        if (rotation == 90 or rotation == 270):
             return [int(resolution[1]), int(resolution[0])]
         else:
             return [int(resolution[0]), int(resolution[1])]
