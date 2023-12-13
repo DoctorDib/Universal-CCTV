@@ -1,13 +1,15 @@
-from CameraBase import CameraBase
-from Info import Info
-from Streaming import StreamingServer
-from flask import Response
-
-from time import sleep
-
 import datetime as dt
 import threading
 import cv2 
+import logging
+
+from time import sleep
+
+from flask import Response
+
+from CameraBase import CameraBase
+from Streaming import StreamingServer
+from Info import Info
 
 currentMode = ""
 
@@ -64,7 +66,11 @@ class Camera(CameraBase):
         info.lock_controls()
 
         # Preparing the camera to be used once again
-        self.camera = cv2.VideoCapture(self.config.video_settings('source')) # TODO Change here 
+        source = self.config.video_settings('source')
+        self.camera = cv2.VideoCapture(source) # TODO Change here
+
+        # Waiting for camera to initialise
+        sleep(2) 
         
         self.info = info
 
@@ -155,16 +161,24 @@ class Camera(CameraBase):
         super()._stop_recording()
 
         try:
-            if (self.out is not None):
+            if self.out is not None:
+                logging.info("Releasing self.out")
                 self.out.release()
-            if (self.camera is not None):
+
+            if self.camera is not None:
+                logging.info("Releasing self.camera")
                 self.camera.release()
 
             with self.info.lock:
                 self.info.get_video_files()
+
+        except cv2.error as e:
+            logging.error("Error when closing camera on Port 1")
+            logging.error(e)
+
         except Exception as e:
-            print("Error when closing camera on Port 1")
-            print(e)
+            logging.error("An unexpected error occurred:")
+            logging.error(e)
 
     # STEP 5
     def _tick(self):
