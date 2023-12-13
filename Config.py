@@ -44,6 +44,14 @@ class Config():
         base = self.get('thumbnail_settings')
         return base[key]
     
+    def get_resolution(self):
+        rotation = self.config.video_settings('rotation')
+        resolution = self.config.video_settings('resolution').lower().split('x')
+        if (rotation is 90 or 270):
+            return [int(resolution[1]), int(resolution[0])]
+        else:
+            return [int(resolution[0]), int(resolution[1])]
+    
     def get_video_settings(self, mode, key):
         base = self.camera_settings(mode)
         value = base[key]

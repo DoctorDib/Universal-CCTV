@@ -69,8 +69,12 @@ class Camera(CameraBase):
         source = self.config.video_settings('source')
         self.camera = cv2.VideoCapture(source) # TODO Change here
 
+        resolution = self.config.get_resolution()
+        self.camera.set(cv2.CAP_PROP_FRAME_WIDTH, resolution[0])
+        self.camera.set(cv2.CAP_PROP_FRAME_HEIGHT, resolution[1])
+
         # Waiting for camera to initialise
-        sleep(2) 
+        sleep(2)
         
         self.info = info
 
@@ -123,13 +127,13 @@ class Camera(CameraBase):
         video_format = self.config.video_settings('cv_format')
         framerate = self.config.video_settings('framerate')
         codec = self.config.video_settings('codec')
-        resolution = self.config.video_settings('resolution').split('X')
+        
+        resolution = self.config.get_resolution()
+        resolution_input = (resolution[0], resolution[1])
 
         self.fourcc = cv2.VideoWriter_fourcc(*codec)
         video_path = self.config.build_video_path(f"{time_stamp}.{video_format}")
-        print(resolution)
-        resolution_input = (int(resolution[0]), int(resolution[1]))
-
+        
         self.out = cv2.VideoWriter(video_path, self.fourcc, framerate, resolution_input)  
         
         with self.info.lock:
