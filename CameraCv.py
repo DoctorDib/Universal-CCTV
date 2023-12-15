@@ -230,6 +230,9 @@ class Camera(CameraBase):
         elif (rotation == 270):
             frame = cv2.rotate(frame, cv2.ROTATE_90_COUNTERCLOCKWISE)
 
+        resolution = self.config.get_resolution()
+        frame = cv2.resize(frame, (resolution[0], resolution[1]))
+
         # Get the height and width of the frame
         height, width, _ = frame.shape
 
