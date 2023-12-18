@@ -30,3 +30,7 @@ Software:
 
 
 https://linuxhint.com/install-h264-decoder-ubuntu/
+
+
+Make sure the chosen resolution is compatible with your chosen webcam... spent ages figuring out why it silentely fails writing to a file.
+my camera was only compatible for 1440x1080 and not 1920x1080

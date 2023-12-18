@@ -1,3 +1,5 @@
+@import "./Resources/theme.scss";
+
 .app-container {
     display: flex;
     flex-direction: row;
@@ -5,36 +7,54 @@
     justify-content: space-between;
 
     .side-bar {
-        background-color: #202020;
+        background-color: $black-light;
         height: 100vh;
         width: 20vw;
-        border-left: 1px solid #4d4d4d;
+        border-left: 1px solid $white-dark;
     }
 
     .container {
-        max-width: 50vw;
+        width: 100%;
+        padding: 0;
 
-        .viewer {
-            color: white;
-            font-size: 25px;
-            margin: 10px;
+        .information {
             display: flex;
+            justify-content: center;
+            align-items: center;
+            position: absolute;
+            border-radius: $border-radius;
+            margin: 10px;
 
-            div {
-                font-size: 20px;
-                margin: 5px;
+            .viewer {
+                color: $primary;
+                font-size: $font-size-lg;
+                margin: 10px;
+                display: flex;
+    
+                div {
+                    font-size: 20px;
+                    margin: 5px;
+                }
+            }
+    
+            .title {
+                font-size: $font-size-xl;
+                color: $primary;
+                text-align: center;
+                padding: 10px;
             }
         }
-
-        .title {
-            font-size: 38px;
-            color: white;
-            text-align: center;
-            padding: 20px;
-        }
-
-        .video-player {
-            width: 100%;
-        }
     } 
+}
+
+.video-display-container {
+    display: flex;
+    width: 100%;
+    background-color: $black;
+    justify-content: center;
+    border-bottom: 1px solid $gray;
+
+    .video-display {
+        height: 75vh;
+    }
 }

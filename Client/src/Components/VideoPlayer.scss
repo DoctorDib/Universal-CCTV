@@ -1,0 +1,28 @@
+@import "../Resources/theme.scss";
+
+.speed-control-container {
+    width: 100%;
+
+    .playback-rate {
+        display: flex;
+        justify-content: center;        
+    }
+
+    .speed-control-buttons {
+        width: 100%;
+        display: flex;
+        flex-direction: row;
+        justify-content: center;
+    }
+
+    button {
+        width: 100px;
+        height: 100px;
+        margin: 10px;
+        font-size: 60px;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        cursor: pointer;
+    }
+}

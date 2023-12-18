@@ -1,0 +1,67 @@
+@use "sass:map";
+
+/* Colours */
+$background: #3D3D3D;
+$header: #84B026;
+$foreground: #173540;
+$highlight: #161F30;
+$accent: #217373;
+
+/* Font Sizes */
+$base-font-size: 18px; // Define the base font size first
+
+$font-size-xs: $base-font-size * 0.8;
+$font-size-sm: $base-font-size * 0.9;
+$font-size-md: $base-font-size;
+$font-size-lg: $base-font-size * 1.1;
+$font-size-xl: $base-font-size * 1.5;
+
+$border-radius: 3px;
+
+/* Colours */
+$blue: #4670be;
+$blue-dark: #161F30;
+$blue-light: #217373;
+
+$green: #84B026;
+$green-dark: #4f6916;
+$green-light: #b5cf7c;
+
+$red: #be4646;
+$red-dark: #722a2a;
+$red-light: #cb6a6a;
+
+$white: #fff;
+$white-dark: #7f7f7f;
+
+
+$black-light: #2f2f2f;
+$black-dark: #0f0f0f;
+
+
+
+$blue: #007bff;
+$indigo: #6610f2;
+$purple: #6f42c1;
+$pink: #e83e8c;
+$red: #be4646;
+$orange: #fd7e14;
+$yellow: #ffc107;
+$green: #28a745;
+$teal: #20c997;
+$cyan: #17a2b8;
+$white: #fff;
+$gray: #6c757d;
+$gray-dark: #343a40;
+$black: #191919;
+
+$primary: #84B026;
+$secondary: #6c757d;
+
+$success: #28a745;
+$info: #17a2b8;
+$warning: #ffc107;
+$danger: #dc3545;
+
+$light: #f8f9fa;
+$dark: #343a40;

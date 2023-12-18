@@ -1,50 +1,46 @@
+@use "sass:map";
+@import "../Resources/theme.scss";
+
 .livefeed-container {
-    max-width: 50vw;
-    margin: 20px;
-    
-    .camera-display {
-        width: 100%;
-        border-radius: 20px;
-        border: 2px solid #717171;
-    }
+    width: 100%;
     
     .control-bar {
         margin: 100px;
 
         .button-container {
-            display: flex;
+            display: flex !important;
+            flex-direction: row;
             justify-content: center;
-            align-items: center;
+            width: 100%;
 
             button {
-                display: flex;
-                justify-content: center;
-                align-items: center;
-                color: black;
-                font-size: 25px;
+                font-size: $font-size-xl; 
                 margin: 10px;
                 width: 100px;
                 height: 100px;
                 cursor: pointer;
-                border: 3px solid #bbb;
-                border-radius: 20%;
-                box-shadow: inset 0 0 10px black;
 
+                border-radius: $border-radius;
+                
                 &:hover {
-                    box-shadow: inset 0 0 20px black;
+                    opacity: .7;
                 }
 
                 &:active {
-                    box-shadow: inset 0 0 50px black;
+                    opacity: .8;
                 }
             }
 
             button.streaming {
-                background-color: blue;
+                background-color: $blue;
+                
+                &:hover {
+                    color: $cyan;
+                }
             }
 
             button.recording {
-                background-color: red;
+                background-color: $red;
             }
         }
 
@@ -56,39 +52,29 @@
                 display: flex;
                 height: 30px;
                 width: 30px;
-                border: 2px #7b7b7b solid;
+                border: 2px solid $white-dark;
                 border-radius: 100%;
                 cursor: pointer;
-                box-shadow: inset 0 0 10px black;
-                background-color: #4d4d4d;
-
-                &:nth-last-child(10) {
-                    border: 2px white solid !important;
-                }
-
-                &:nth-last-child(6) {
-                    border: 2px white solid !important;
-                }
+                box-shadow: inset 0 0 10px $black;
+                background-color: $green;
 
                 &:hover {
-                    box-shadow: inset 0 0 15px black;
+                    box-shadow: inset 0 0 15px $black;
                 }
             }
 
             .thumb {
-                background-color: #ccc;
+                background-color: $green-dark;
                 width: 24px;
                 height: 24px;
-                border-radius: 100%;;
+                border-radius: 100%;
                 z-index: 0;
-                border: 3px solid black;
+                border: 3px solid $black;
                 margin: 2px;
-
                 display: flex;
                 text-align: center;
                 justify-content: center;
                 align-items: center;
-                
             }
         }
     }

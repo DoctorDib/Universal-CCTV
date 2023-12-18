@@ -19,15 +19,13 @@ const Layout = ({ShowControl = true}:LiveFeedInterface) => {
     const { config } = useContext(ConfigContext);
     const { controlLockState, isRecording, isStreaming, doAction } = useContext(SocketContext);
 
-    const handleChange = (newValue:any) => {
-        console.log(newValue * 10)
-        setClient(newValue *  10);
-    };
-
+    const handleChange = (newValue:any) => setClient(newValue *  10);
     const onRestart = () => FetchData(config, '/restart');
     const onToggleStreaming = () => doAction('toggle_stream');
     const onToggleRecord = () => doAction('toggle_recording');
     const onSnapshot = () => FetchData(config, '/snapshot');
+
+    useEffect(() => setStreamIp(isStreaming ? BuildUrl(config, '/video_feed') : null), [isStreaming]);
 
     useEffect(() => {
         const moveServo = async () => {
@@ -72,10 +70,12 @@ const Layout = ({ShowControl = true}:LiveFeedInterface) => {
 
     return (
         <div className={'livefeed-container'}>
-            <img className={'camera-display'} src={streamIp} />
+            <div className={'video-display-container'}>
+                <img className={'video-display'} src={streamIp} />
+            </div>
 
             <div className={'control-bar'} style={{display: ShowControl ? 'block' : 'none'}}>
-                <ReactSlider
+                {/* <ReactSlider
                     className={"horizontal-slider"}
                     markClassName={"mark"} 
                     thumbClassName={"thumb"}
@@ -84,13 +84,13 @@ const Layout = ({ShowControl = true}:LiveFeedInterface) => {
                     value={client / 10}
                     renderThumb={(props, state) => <div {...props}>{value}</div>}
                     onChange={handleChange}
-                />
+                /> */}
 
                 <div className={'button-container'} style={{display: controlLockState ? 'none' : 'block'}}>
                     <button onClick={()=>onToggleStreaming()} className={isStreaming ? 'streaming' : ''}> <FaEye/> </button>
                     <button onClick={()=>onToggleRecord()} className={isRecording ? 'recording' : ''}> • </button>
                     <button onClick={()=>onRestart()} content="restart"> <VscDebugRestart/> </button>
-                    <button onClick={()=>onSnapshot()} content="snapshot" style={{backgroundColor: '#57a657'}}> <FaCameraRetro/> </button>
+                    <button onClick={()=>onSnapshot()} content="snapshot"> <FaCameraRetro/> </button>
                 </div>
             </div>
         </div> 

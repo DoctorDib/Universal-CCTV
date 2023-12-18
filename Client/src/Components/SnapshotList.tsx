@@ -56,8 +56,6 @@ const App = () => {
                 <div className='main-content'>    
                     <img src={BuildUrl(config, `/get/snapshot/${name}`)}/>
                 </div>
-
-                {index == 0 ? <div className={'blinking-circle'}> </div> : null}
             </div>
         )));
     }, [snapshotList]);

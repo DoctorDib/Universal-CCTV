@@ -1,4 +1,4 @@
-
+@import "../Resources/theme.scss";
 
 .video-list-container {    
     height: 100vh;
@@ -20,8 +20,8 @@
         width: 100%;
         height: 15vh;
         cursor: pointer;
-        background-color: black;
-        border: 1px #3e3e3e solid;
+        background-color: $black-dark;
+        border: 1px solid $black-light;
     }
 
     .list-container {
@@ -29,93 +29,44 @@
         height: 80vh;
         display: flex;
         flex-direction: column;
+        background-color: $gray-dark;
 
-        .video-button {
-            background-color: #313131;
-            border: 1px solid black;
-            margin: 5px;
-            cursor: pointer;
-            color: #ddd;
+        .selected {
+            background-color: $black-light !important;
+        }
+    }
+
+    .livefeed-container {
+        max-height: 200px;
+
+        .video-display {
+            height: 200px;
+        }
+    }
+
+    .camera-preview {
+        position: relative;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+
+        .interactive {
+            position: absolute;
             display: flex;
-            justify-content: space-between;
+            justify-content: center;
             align-items: center;
-            border-radius: 10px;
-            
-            &:first-child {
-                border: 2px solid #590000
-            }
+            cursor: pointer;
+            width: 100%;
+            height: 100%;
+            opacity: .2;
 
             &:hover {
-                background-color: #4a4a4a;
+                opacity: .7;
             }
 
-            .main-content {
-                display: flex;
-                justify-content: space-between;
-                align-items: center;
-                font-size: 18px;
-                height: 50px;
-
-                .video-option {
-                    font-size: 25px;
-                    display: flex;
-                    justify-content: center;
-                    align-items: center;
-                    height: 100%;
-                    width: 100px;
-
-                    a {
-                        color: inherit;
-                    }
-
-                    &:nth-child(1) {
-                        background-color: green;
-                        &:hover {
-                            background-color: darkgreen;
-                        }
-                    }
-
-                    &:nth-child(2) {
-                        background-color: blue;
-                        &:hover {
-                            background-color: darkblue;
-                        }
-                    }
-                }   
-
-                .date {
-                    display: flex;
-                    justify-content: center;
-                    align-items: center;
-                    width: 100%;
-                    height: 100%;
-                }
+            .display-eye {
+                font-size: 10em;
             }
-        
-            .blinking-circle {
-                width: 20px;
-                height: 20px;
-                background-color: #9d0000;
-                border-radius: 50%;
-                animation: blink 3s linear infinite;
-            }
-        } 
-        .selected {
-            background-color: #1a1a1a !important;
         }
     }
 }
-
-@keyframes blink {
-    0% { opacity: 0 }
-
-    80% {
-        opacity: 0;
-    }
-    90% {
-        opacity: 1;
-    }
-    100% {
-        opacity: 0;
-    }
-  }

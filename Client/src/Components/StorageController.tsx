@@ -4,15 +4,28 @@ import { useState, useEffect, useContext } from 'react';
 import './StorageController.scss';
 import { FetchData } from '../Helpers/helper';
 import ConfigContext from '../Helpers/ConfigContext';
+import { SocketContext } from '../Helpers/SocketContext';
 
 interface StorageControllerInterface {
 }
 
 const App = ({  }: StorageControllerInterface) => {
     const [total, setTotal] = useState<number>(0); // Set an initial value
-    const [available, setAvailable] = useState<number>(0);
     const [usedPercentage, setUsedPercentage] = useState<number>(0);
+    const { storageUsed } = useContext(SocketContext);
     const { config } = useContext(ConfigContext);
+
+    useEffect(() => {
+        if (total === 0) {
+            return;
+        }
+
+        if (storageUsed === 0) {
+            setUsedPercentage(100);
+        } else {
+            setUsedPercentage(100 - ((storageUsed / total) * 100));
+        }
+    }, [storageUsed]);
 
     useEffect(() => {
         const fetchData = async () => {
@@ -22,14 +35,6 @@ const App = ({  }: StorageControllerInterface) => {
                 // Check if the request was successful (status code 200)
                 if (response.success) {
                     setTotal(response.data.total.toFixed(2));
-                    setAvailable(response.data.availiable.toFixed(2));
-
-                    if (response.data.availiable === 0) {
-                        setUsedPercentage(100);
-                    } else {
-                        setUsedPercentage(100 - (response.data.total / response.data.availiable));
-                    }
-
                 } else {
                     console.error(`Error: ${response.status}`);
                 }
@@ -51,7 +56,7 @@ const App = ({  }: StorageControllerInterface) => {
                 <div className={'total'}> Total </div>
             </div>
             <div className={'info'}> 
-                <div className={'available'}> { available } GB </div>
+                <div className={'available'}> { storageUsed.toFixed(2) } GB </div>
                 <div className={'total'}> { total } GB </div>
             </div>
         </div>
