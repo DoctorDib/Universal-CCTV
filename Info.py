@@ -34,6 +34,7 @@ class Info():
             "storage_used": self.storage_used,
             "video_files": self.get_video_files(),
             "snapshot_files": self.get_snapshot_files(),
+            "saved_video_files": self.get_saved_video_files(),
             "control_lock_state": self.control_lock_state,
         }
     
@@ -62,6 +63,12 @@ class Info():
         (path, f))]
         self.socketio.emit('snapshot_files', snapshot_files, namespace='/')
         return snapshot_files
+
+    def get_saved_video_files(self):
+        output_directory = Config().saved_video_path()
+        video_files = os.listdir(output_directory)
+        self.socketio.emit('saved_video_files', video_files, namespace='/')
+        return video_files
     
     def get_disk_space(self):
         system_platform = platform.system()

@@ -43,6 +43,10 @@ class CameraBase():
         self.config.create_directory(self.config.snapshot_path())
         # Create thumbnail folder if it does not exist
         self.config.create_directory(self.config.thumbnail_path())
+        # Create saved video folder if it does not exist
+        self.config.create_directory(self.config.saved_video_path())
+        # Create saved thumbnail folder if it does not exist
+        self.config.create_directory(self.config.saved_thumbnail_path())
 
         self.streaming_handler = StreamingHandler
         self.streaming_handler.output = self.output  # Set output_instance as a class attribute
@@ -78,7 +82,7 @@ class CameraBase():
     def _check_should_tick_status(self):
         pass
 
-    def initialise_camera(self, info):
+    def initialise_camera(self, info: Info):
         self.info = info
         version = self.config.get('version')
         print(f"Initialising {version}")

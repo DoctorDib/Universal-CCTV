@@ -7,10 +7,10 @@
     justify-content: space-between;
 
     .side-bar {
-        background-color: $black-light;
+        background-color: $black;
         height: 100vh;
         width: 20vw;
-        border-left: 1px solid $white-dark;
+        border-left: 1px solid $gray;
     }
 
     .container {
@@ -56,5 +56,6 @@
 
     .video-display {
         height: 75vh;
+        max-width: 80vw;
     }
 }

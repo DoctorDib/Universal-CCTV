@@ -18,14 +18,15 @@
 
     "video_settings": {
         "location": "/video",
+        "favourite": "/video/saved",
         "pi_format": "h264",
         "cv_format": "mp4",
         "codec": "avc1",
         "max_minutes": 15,
-        "resolution": "1920x1080",
+        "resolution": "1440x1080",
         "framerate": 24,
-        "rotation": 90,
-        "source": 2
+        "rotation": 0,
+        "source": 0
     },
 
     "snapshot_settings": {
@@ -35,6 +36,7 @@
 
     "thumbnail_settings": {
         "location": "/thumbnails",
+        "favourite": "/thumbnails/saved",
         "format": "jpeg"
     },
 

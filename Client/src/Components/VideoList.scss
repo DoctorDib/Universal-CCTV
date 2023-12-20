@@ -20,19 +20,51 @@
         width: 100%;
         height: 15vh;
         cursor: pointer;
-        background-color: $black-dark;
-        border: 1px solid $black-light;
+        background-color: $black;
+        border: 1px solid $black;
     }
 
-    .list-container {
+    .list-content {
         overflow-y: scroll;
-        height: 80vh;
+        height: 75vh;
         display: flex;
         flex-direction: column;
         background-color: $gray-dark;
 
+        .title {
+            text-align: center;
+            background-color: $black;
+            color: $primary;
+            padding: 5px;
+            border-top: 1px solid $gray;
+        }
+
         .selected {
-            background-color: $black-light !important;
+            background-color: $black !important;
+        }
+    }
+
+    .list-mode-container {
+        height: 5vh;
+        background-color: $gray-dark;
+        border-top: 1px solid $gray;
+        display: flex;
+        justify-content: left;
+
+        button {
+            background-color: $gray;
+            height: 100%;
+            width: 100%;
+            border-radius: 0;
+            border-right: 1px solid $gray-dark;
+
+            &:last-child {
+                border-right: 0;
+            }
+        }
+
+        .active {
+            background-color: $primary;
         }
     }
 

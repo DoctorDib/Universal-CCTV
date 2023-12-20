@@ -12,19 +12,17 @@ except:
     # Anything else that's not a Raspberry Pi Camera
     from CameraCv import Camera
     servo_thread = None
-    
 
 from Config import Config
 
 import os
 import os.path
-import os.path
 from time import sleep
 import threading
 import os
+import shutil
 
 camera_thread : Camera = Camera()
-
 
 app = Flask(__name__)
 CORS(app, resources={r"/*":{"origins":"*"}})
@@ -113,6 +111,14 @@ def get_thumbnail(filename):
     name = f"{filename}.{Config().thumbnail_settings('format')}"
     return send_from_directory(path, name, conditional=True)
 
+@app.route('/get/savedthumbnail/<filename>')
+def get_saved_thumbnail(filename):
+    # removing the format (I only care about the name)
+    filename = filename.split('.')[0]
+    path = Config().saved_thumbnail_path()
+    name = f"{filename}.{Config().thumbnail_settings('format')}"
+    return send_from_directory(path, name, conditional=True)
+
 ## SERVO API
 
 @app.get('/move/<int:percentage>')
@@ -147,9 +153,21 @@ def get_files():
     files = info.get_video_files()
     return response(True, data={ "files": files })
 
+@app.get('/get_saved_files')
+def get_saved_files():
+    files = info.get_saved_video_files()
+    return response(True, data={ "files": files })
+
 @app.route('/videos')
 def videos_page():
     output_directory = Config().video_path()
+    file_list = os.listdir(output_directory)
+    # return True
+    return render_template('./main.html', files=file_list)
+
+@app.route('/savedvideos')
+def saved_videos_page():
+    output_directory = Config().saved_video_path()
     file_list = os.listdir(output_directory)
     # return True
     return render_template('./main.html', files=file_list)
@@ -201,6 +219,21 @@ def get_resolution():
 @app.route('/get/framerate')
 def get_framerate():
     return Config().video_settings('framerate')
+
+# SAVE VIDEOS
+@app.route('/save/video/<filename>')
+def save_video_file(filename):
+    # Video
+    before = Config().build_video_path(filename)
+    after = Config().build_saved_video_path(filename)
+    shutil.copy(before, after)
+
+    # removing the format (I only care about the name)
+    filename = filename.split('.')[0]
+    name = f"{filename}.{Config().thumbnail_settings('format')}"
+    before = Config().build_thumbnail_path(name)
+    after = Config().build_saved_thumbnail_path(name)
+    shutil.copy(before, after)
 
 ## WEB SOCKET STUFF
 @socketio.on('connect')

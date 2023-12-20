@@ -69,6 +69,10 @@ class Config():
         return os.getcwd() + self.video_settings('location')
     def build_video_path(self, file_name: str):
         return f"{self.video_path()}/{file_name}"
+    def saved_video_path(self):
+        return os.getcwd() + self.video_settings('favourite')
+    def build_saved_video_path(self, file_name: str):
+        return f"{self.video_path()}/{file_name}"
 
     def snapshot_path(self):
         return os.getcwd() + self.snapshot_settings('location')
@@ -78,6 +82,11 @@ class Config():
     def thumbnail_path(self):
         return os.getcwd() + self.thumbnail_settings('location')
     def build_thumbnail_path(self, file_name: str):
+        return f"{self.thumbnail_path()}/{file_name}"
+
+    def saved_thumbnail_path(self):
+        return os.getcwd() + self.thumbnail_settings('favourite')
+    def build_saved_thumbnail_path(self, file_name: str):
         return f"{self.thumbnail_path()}/{file_name}"
     
     def create_directory(self, directory_path):

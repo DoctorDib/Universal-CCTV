@@ -87,10 +87,10 @@ const Layout = ({ShowControl = true}:LiveFeedInterface) => {
                 /> */}
 
                 <div className={'button-container'} style={{display: controlLockState ? 'none' : 'block'}}>
-                    <button onClick={()=>onToggleStreaming()} className={isStreaming ? 'streaming' : ''}> <FaEye/> </button>
-                    <button onClick={()=>onToggleRecord()} className={isRecording ? 'recording' : ''}> • </button>
-                    <button onClick={()=>onRestart()} content="restart"> <VscDebugRestart/> </button>
-                    <button onClick={()=>onSnapshot()} content="snapshot"> <FaCameraRetro/> </button>
+                    <button title={'Toggle Streaming'} onClick={()=>onToggleStreaming()} className={isStreaming ? 'streaming' : ''}> <FaEye/> </button>
+                    <button title={'Toggle Recording'} onClick={()=>onToggleRecord()} className={isRecording ? 'recording' : ''}> • </button>
+                    <button title={'Restart Camera'} onClick={()=>onRestart()} content="restart"> <VscDebugRestart/> </button>
+                    <button title={'Take Snapshot'} onClick={()=>onSnapshot()} content="snapshot"> <FaCameraRetro/> </button>
                 </div>
             </div>
         </div> 

@@ -11,8 +11,6 @@ from CameraBase import CameraBase
 from Streaming import StreamingServer
 from Info import Info
 
-currentMode = ""
-
 class Camera(CameraBase):
     def generate_frames(self):
         while True:
@@ -60,7 +58,7 @@ class Camera(CameraBase):
         super()._set_up_camera()
 
     # STEP 2
-    def initialise_camera(self, info):
+    def initialise_camera(self, info: Info):
         super().initialise_camera(info)
 
         info.lock_controls()
@@ -68,6 +66,7 @@ class Camera(CameraBase):
         # Preparing the camera to be used once again
         source = self.config.video_settings('source')
         self.camera = cv2.VideoCapture(source) # TODO Change here
+        self._set_up_camera()
 
         resolution = self.config.get_resolution()
         self.camera.set(cv2.CAP_PROP_FRAME_WIDTH, resolution[0])

@@ -24,6 +24,7 @@ interface SocketContextValue {
     storageUsed: number;
     videoFiles: Array<string>;
     screenshotFiles: Array<string>;
+    savedVideoFiles: Array<string>;
 
     doAction: (actionName: string) => void;
 }
@@ -38,6 +39,7 @@ export const SocketProvider: React.FC<SocketContextProps> = ({ children }) => {
     const [servoPosition, setServoPosition] = useState<number>(0);
     const [storageUsed, setStorageUsed] = useState<number>(0);
     const [videoFiles, setVideoFiles] = useState<Array<string>>([]);
+    const [savedVideoFiles, setSavedVideoFiles] = useState<Array<string>>([]);
     const [controlLockState, setControlLockState] = useState<boolean>(false);
     const [screenshotFiles, setScreenshotFiles] = useState<Array<string>>([]);
     const { config } = useContext(ConfigContext);
@@ -67,6 +69,7 @@ export const SocketProvider: React.FC<SocketContextProps> = ({ children }) => {
             setServoPosition(data.servo_position);
             setStorageUsed(data.storage_used);
             setVideoFiles(data.video_files);
+            setSavedVideoFiles(data.saved_video_files);
             setScreenshotFiles(data.snapshot_files);
             setControlLockState(data.control_lock_state);
         });
@@ -77,6 +80,7 @@ export const SocketProvider: React.FC<SocketContextProps> = ({ children }) => {
         newSocket.on('storage_used', (data: number): void => setStorageUsed(data)); 
         newSocket.on('video_files', (data: Array<string>): void => setVideoFiles(data)); 
         newSocket.on('snapshot_files', (data: Array<string>): void => setScreenshotFiles(data)); 
+        newSocket.on('saved_video_files', (data: Array<string>): void => setSavedVideoFiles(data)); 
         newSocket.on('control_lock_state', (data: boolean): void => setControlLockState(data));
         
         // Clean up the socket connection on component unmount
@@ -85,7 +89,7 @@ export const SocketProvider: React.FC<SocketContextProps> = ({ children }) => {
 
     return <SocketContext.Provider value={{ 
         socket, clientCount, isStreaming, isRecording, 
-        servoPosition, storageUsed, videoFiles, screenshotFiles, controlLockState,
+        servoPosition, storageUsed, videoFiles, screenshotFiles, savedVideoFiles, controlLockState,
         doAction 
     }}> {children} </SocketContext.Provider>
 };

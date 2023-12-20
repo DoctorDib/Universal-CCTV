@@ -1,4 +1,5 @@
 from CameraBase import CameraBase
+from Info import Info
 from Streaming import StreamingServer
 from flask import Response
 
@@ -9,8 +10,6 @@ import threading
 
 from picamera import PiCamera
 import picamera as pc
-
-currentMode = ""
 
 class Camera(CameraBase):
     def generate_frames(self):
@@ -25,13 +24,31 @@ class Camera(CameraBase):
         return Response(self.generate_frames(), mimetype='multipart/x-mixed-replace; boundary=FRAME')
 
     def __init__(self, fixed_mode = False):
-        ## Camera set up
-        self.camera = PiCamera()
-
         super().__init__(fixed_mode)
 
         self._set_up_camera()
         self._start_web_server()
+
+    def toggle_recording(self):
+        super().toggle_recording()
+        if (self.info.is_recording):
+            self._start_recording()
+        else:
+            self._stop_recording()
+
+        self._check_should_tick_status()
+
+    def toggle_streaming(self):
+        super().toggle_streaming()        
+        self._check_should_tick_status()
+
+    def _check_should_tick_status(self):
+        super()._check_should_tick_status()
+        if (self.should_tick is False and (self.info.is_recording or self.info.is_streaming)):
+            self.should_tick = True
+            self.initialise_camera(self.info)
+        elif (self.should_tick is True and (not self.info.is_recording and not self.info.is_streaming)):
+            self.should_tick = False
         
     # STEP 1
     def _set_up_camera(self):
@@ -64,28 +81,48 @@ class Camera(CameraBase):
         self.camera.annotate_text_size =self.config.text_settings("text_size")
 
     # STEP 2
-    def initialise_camera(self):
-        super().initialise_camera()
+    def initialise_camera(self, info: Info):
+        super().initialise_camera(info)
+
+        info.lock_controls()
+
+        ## Camera set up
+        self.camera = PiCamera()
+        self._set_up_camera()
+
         self._start_recording()
+
+        # Waiting for camera to initialise
+        sleep(2)
+
+        self.info = info
+
+        if (self.info.control_lock_state):
+            self.info.unlock_controls()
+
         # Tick away for ever
-        while(self.is_running):
-            # Only tick if active
-            if (self.should_tick):
-                self._tick()
+        while(self.should_tick):
+            self._tick()
 
     def shutdown(self):
-        self._stop_recording()
         self.info.is_recording = False
         self.info.is_streaming = False
         self.should_tick = False
 
+        self.server.shutdown()
+        self.serverThread.join()
+
     def restart(self):
-        self._stop_recording()
+        if (self.info.is_recording):
+            self._stop_recording()
+
+        self.clock.reset()
         sleep(.5) # Waiting for camera to fully shutdown
+
         self._set_up_camera()
         # Giving it time to catch up and set up camera
         sleep(.5)
-        self.initialise_camera()
+        self.initialise_camera(self.info)
 
     def snapshot(self, name: str = None, is_thumbnail: bool = False):
         path = super().snapshot(name, is_thumbnail)
@@ -151,7 +188,7 @@ class Camera(CameraBase):
 
     # STEP 5
     def _tick(self):
-        try:     
+        try:
             super()._tick()
 
             self.camera.annotate_text = self.helper.grabTextMode(self.selection) + " - " + super()._get_formatted_time()

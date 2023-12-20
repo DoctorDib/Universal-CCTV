@@ -3,36 +3,48 @@ import './VideoButton.scss';
 import classNames from "classnames";
 import { IoIosArrowForward , IoIosArrowDown } from 'react-icons/io';
 
-type DateTimeMap = { [key: string]: string[] };
+type DateTimeMap = { [key: string]: { formattedDateTime: string[], originalData: string[] } };
 
-interface DataTest { 
+interface DataTest {
     data: string[],
     selectedVideo: string,
     setSelectedVideo: (date: string) => void,
 }
 
+type DateObject = {
+    [date: string]: any;
+  };
+
 const VideoButtonComponent = ({ data, selectedVideo, setSelectedVideo, }: DataTest) => {    
     const [element, setElement] = useState<DateTimeMap>({});
     const [collapsedDates, setCollapsedDates] = useState<string[]>([]);
 
-    const generateDateTimeMap = (data: string[]) => {
-        const dateTimeMap: { [key: string]: string[] } = {};
-      
+    const generateDateTimeMap = (data: string[]): DateTimeMap => {
+        const dateTimeMap: DateTimeMap = {};
+    
         data.forEach((item) => {
+            // TODO - Find a better way...
+            if (item === 'saved') {
+                return;
+            }
+
+            console.log(item);
             const [date, time] = item.split('_');
             const formattedDate = date.replace(/-/g, '');
-            const formattedTime = time.replace(/-/g, ':').replace('.mp4', '');
-        
+            let formattedTime = time.replace(/-/g, ':').replace('.mp4', '');
+            formattedTime = formattedTime.replace(/-/g, ':').replace('.jpeg', '');
+    
             if (!dateTimeMap[formattedDate]) {
-                dateTimeMap[formattedDate] = [];
+                dateTimeMap[formattedDate] = { formattedDateTime: [], originalData: [] };
             }
-        
-            dateTimeMap[formattedDate].push(formattedTime);
+    
+            dateTimeMap[formattedDate].formattedDateTime.unshift(formattedTime);
+            dateTimeMap[formattedDate].originalData.unshift(item);
         });
-      
+
         return dateTimeMap;
     };
-
+    
     useEffect(() => setElement(generateDateTimeMap(data)), [data]);
 
     const formatDateString = (date: string): string => `${date.slice(6, 8)}-${date.slice(4, 6)}-${date.slice(0, 4)}`;
@@ -47,25 +59,35 @@ const VideoButtonComponent = ({ data, selectedVideo, setSelectedVideo, }: DataTe
 
     return (
         <div className={'container'}>
-            {Object.keys(element).map((date, index) => (
+            {Object.keys(element).reverse().map((date, dateIndex) => (
                 <div key={date} className={'date-container'}>
                     <button
                         className={'date-button'}
                         onClick={() => toggleCollapse(date)}
                         aria-expanded={!collapsedDates.includes(date)}
                     >
-                        {formatDateString(date)}
+                        <div className={'info-container'}>
+                            <div className={'count'}> 
+                                { element[date].formattedDateTime.length } 
+                            </div>
+                            <div className={'title'}>
+                                {formatDateString(date)}
+                            </div>
+                        </div>
 
                         <div>
                             {!collapsedDates.includes(date) ? <IoIosArrowForward /> : <IoIosArrowDown/>}
                         </div>
                     </button>
                     <div id={date} className={classNames('time-button-container', !collapsedDates.includes(date) ? 'collapse' : '')}>
-                        {element[date].map((time, index) => (
-                            <div key={index} className={classNames('time-button', data[index] == selectedVideo ? 'selected' : '')} onClick={() => setSelectedVideo(data[index])}>
-                                {time}
-                            </div>
-                        ))}
+                        {element[date].formattedDateTime.map((time, index) => {
+                            const originalDate = element[date].originalData[index];
+                            return (
+                                <div key={data[dateIndex + index]} className={classNames('time-button', selectedVideo === originalDate ? 'selected' : '')} onClick={() => setSelectedVideo(originalDate)}>
+                                    {time}
+                                </div>
+                            )
+                        })}
                     </div>
                 </div>
             ))}
