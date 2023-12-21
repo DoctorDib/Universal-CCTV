@@ -1,3 +1,6 @@
+# NOTE
+This project is under heavy refactoring which means messy commits, and messy coding just to get things working.
+
 PiSecurityCamera
 ======
 One way of protecting my mtorbike from bad drivers or theives!
