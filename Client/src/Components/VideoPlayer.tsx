@@ -77,28 +77,10 @@ const VideoPlayer = ({ selectedVideo }: VideoPlayerInterface) => {
             } else if (selectedVideo.includes(ViewerFormat.h264)) {
                 setFormat(ViewerFormat.h264);
             }
-            
+
             const additionUrl: string = selectedVideo.includes(ViewerFormat.jpeg) ? 'get/snapshot' :  'video';
             const url: string = BuildUrl(config, `/${additionUrl}/${selectedVideo}`);
-
-            if (selectedVideo.includes(ViewerFormat.jpeg) || selectedVideo.includes(ViewerFormat.mp4)) {
-                setVideoUrl(url);
-            } else {
-                // Raspberry Pi
-                const jmuxer = new JMuxer({
-                    node: 'h264Stream',
-                    mode: 'video',
-                    debug: false,
-                    fps: 24,
-                });
-        
-                fetch(url).then(async (response) => {
-                    jmuxer.feed({
-                        video: new Uint8Array(await response.arrayBuffer()),
-                    });
-                });
-            }
-
+            setVideoUrl(url);
             // Increment key to force remount of the video element
             setKey((prevKey) => prevKey + 1);
         };
@@ -106,26 +88,21 @@ const VideoPlayer = ({ selectedVideo }: VideoPlayerInterface) => {
         TriggerVideo();
     }, [selectedVideo]);
 
-    useEffect(() => { 
-        fetchData();
-    }, []);
+    useEffect(() => { fetchData(); }, []);
 
     return (
         <div>
             <div className={'video-display-container'}>
-                { format === ViewerFormat.mp4 ? (
+                {format === ViewerFormat.mp4 ? (
                     <video key={key} className={'video-display'} controls ref={videoPlayer}>
                         <source src={videoUrl} type='video/mp4'/>
                         Your browser does not support the video tag.
                     </video>
-                ) 
-                : format === ViewerFormat.h264 ? (
-                    <video key={key} id="h264Stream" className={'video-display'} controls ref={videoPlayer}>
-                        <source src={videoUrl}/>
-                        Your browser does not support the video tag.
-                    </video>
-                )
-                : <img src={videoUrl} className={'video-display'} ref={videoPlayer} /> }
+                ) : format === ViewerFormat.h264 ? (
+                    <H246VideoPlayer key={key} url={videoUrl} videoReference={videoPlayer}/>
+                ) : (
+                    <img src={videoUrl} className={'video-display'} ref={videoPlayer} alt="Snapshot"/>
+                )}
             </div>
 
             <div className={'speed-control-container'}>
@@ -142,3 +119,30 @@ const VideoPlayer = ({ selectedVideo }: VideoPlayerInterface) => {
 };
 
 export default VideoPlayer;
+
+interface VideoEnumInterface {
+    url: string,
+    videoReference: any
+}
+
+const H246VideoPlayer = ({ url, videoReference }: VideoEnumInterface) => {
+    useEffect(() => {
+        console.log(url)
+        const jmuxer = new JMuxer({
+            node: 'h264Stream',
+            mode: 'video',
+            debug: false,
+            fps: 24,
+        });
+
+        fetch(url).then(async (response) => {
+            jmuxer.feed({
+                video: new Uint8Array(await response.arrayBuffer()),
+            });
+        });
+    }, [url]);
+
+    return (
+        <video id="h264Stream" className={'video-display'} controls ref={videoReference}></video>
+    );
+};

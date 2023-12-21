@@ -28,7 +28,6 @@ const VideoButtonComponent = ({ data, selectedVideo, setSelectedVideo, }: DataTe
                 return;
             }
 
-            console.log(item);
             const [date, time] = item.split('_');
             const formattedDate = date.replace(/-/g, '');
             let formattedTime = time.replace(/-/g, ':').replace('.mp4', '');

@@ -55,7 +55,7 @@ const Layout = ({ShowControl = true}:LiveFeedInterface) => {
                     setClient(initialPosition);
                     setValue(initialPosition);
                 } else {
-                    console.error(`Error: ${response.status}`);
+                    console.log(`Error: ${response.status}`);
                 }
             } catch (error) {
                 console.error('Error fetching data:', error);

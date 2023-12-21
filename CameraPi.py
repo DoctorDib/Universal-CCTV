@@ -9,7 +9,6 @@ import datetime as dt
 import threading
 
 from picamera import PiCamera
-from picamera.array import PiRGBArray
 import picamera as pc
 
 class Camera(CameraBase):
