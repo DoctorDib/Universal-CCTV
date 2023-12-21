@@ -9,14 +9,16 @@ import datetime as dt
 import threading
 
 from picamera import PiCamera
+from picamera.array import PiRGBArray
 import picamera as pc
 
 class Camera(CameraBase):
     def generate_frames(self):
-        while self.is_running:
+        while True:
             with self.output.condition:
                 self.output.condition.wait()
                 frame = self.output.frame
+
             yield (b'--FRAME\r\n'
                    b'Content-Type: image/jpeg\r\n\r\n' + frame + b'\r\n')
 
@@ -25,6 +27,8 @@ class Camera(CameraBase):
 
     def __init__(self, fixed_mode = False):
         super().__init__(fixed_mode)
+
+        self.camera = PiCamera()
 
         self._set_up_camera()
         self._start_web_server()
@@ -39,11 +43,18 @@ class Camera(CameraBase):
         self._check_should_tick_status()
 
     def toggle_streaming(self):
-        super().toggle_streaming()        
+        super().toggle_streaming() 
+
+        if (self.info.is_streaming):
+            self._start_streaming()
+        else:
+            self._stop_streaming()
+
         self._check_should_tick_status()
 
     def _check_should_tick_status(self):
         super()._check_should_tick_status()
+
         if (self.should_tick is False and (self.info.is_recording or self.info.is_streaming)):
             self.should_tick = True
             self.initialise_camera(self.info)
@@ -53,10 +64,20 @@ class Camera(CameraBase):
     # STEP 1
     def _set_up_camera(self):
         super()._set_up_camera()
+
+        if not hasattr(self, 'info') or not isinstance(self.info, Info):
+            print("Error: 'self.info' is not properly initialized.")
+            return
+
+        if self.info.is_recording or self.info.is_streaming:
+            return
         
+        if (self.camera is None):
+            return
+
         self.camera.resolution = self.config.get_video_settings(self.selection, 'resolution')
         self.camera.framerate = self.config.get_video_settings(self.selection, 'framerate')
-        self.camera.rotation = self.config.get_video_settings(self.selection, 'rotation ')
+        self.camera.rotation = self.config.get_video_settings(self.selection, 'rotation')
 
         self.camera.awb_mode = self.selected_setting["awb_mode"]
         self.camera.exposure_mode = self.selected_setting["exposure_mode"]
@@ -87,10 +108,7 @@ class Camera(CameraBase):
         info.lock_controls()
 
         ## Camera set up
-        self.camera = PiCamera()
         self._set_up_camera()
-
-        self._start_recording()
 
         # Waiting for camera to initialise
         sleep(2)
@@ -108,6 +126,9 @@ class Camera(CameraBase):
         self.info.is_recording = False
         self.info.is_streaming = False
         self.should_tick = False
+
+        self.camera.stop_preview()
+        self.camera.close()
 
         self.server.shutdown()
         self.serverThread.join()
@@ -134,6 +155,14 @@ class Camera(CameraBase):
         super().delete_snapshot(name)
         self.info.get_snapshot_files()
 
+    def _start_streaming(self):
+        stream_format = self.config.stream_settings('pi_format')
+        self.camera.start_recording(self.output, format=stream_format, splitter_port=2)
+
+    # Update _stop_streaming in CameraPi.py
+    def _stop_streaming(self):
+        self.camera.stop_recording(splitter_port=2)
+
     # STEP 3
     def _start_recording(self):
         time_stamp = super()._get_timestamp()
@@ -141,10 +170,6 @@ class Camera(CameraBase):
         video_path = self.config.build_video_path(f"{time_stamp}.{video_format}")
         self.camera.start_recording(video_path)
         
-        if self.is_new_selection and not self.fixed_mode:
-            stream_format = self.config.stream_settings('pi_format')
-            self.camera.start_recording(self.output, format=stream_format, splitter_port=2)
-
         self.start_duration = int(dt.datetime.now().timestamp() * 1000)
         # Start should
         self.should_tick = True
@@ -179,12 +204,6 @@ class Camera(CameraBase):
             print("Error when closing camera on Port 1")
             print(e)
         
-        try:
-            if self.is_new_selection and not self.fixed_mode:
-                self.camera.stop_recording(splitter_port=2)
-        except Exception as e:
-            print("Error when closing camera on Port 1")
-            print(e)
 
     # STEP 5
     def _tick(self):
@@ -192,12 +211,8 @@ class Camera(CameraBase):
             super()._tick()
 
             self.camera.annotate_text = self.helper.grabTextMode(self.selection) + " - " + super()._get_formatted_time()
-            # camera timeout
-            self.camera.wait_recording(0.1)
 
-            current_duration = int(dt.datetime.now().timestamp() * 1000)
-
-            if (current_duration - self.start_duration) > ((self.config.video_settings('max_minutes') * 60) * 1000):
+            if (self.clock.check_bounds(self.config.video_settings('max_minutes'))):
                 self.restart()
         except KeyboardInterrupt:
             print("KeyboardInterrupt: Stopping the camera and exiting.")
@@ -205,5 +220,4 @@ class Camera(CameraBase):
 
     def _kill(self):
         self._stop_recording()
-
         super()._kill()

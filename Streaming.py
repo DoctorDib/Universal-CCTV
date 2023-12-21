@@ -14,12 +14,13 @@ class StreamingOutput(object):
 
     def write(self, buf):
         if isinstance(buf, np.ndarray):
-            # If buf is a NumPy array, convert it to bytes
             buf = buf.tobytes()
 
-        if buf.startswith(b'\xff\xd8'):
-            # New frame, copy the existing buffer's content and notify all
-            # clients it's available
+        is_jpeg = buf.startswith(b'\xff\xd8')
+        is_h264 = buf.startswith(b'\x00\x00\x00\x01')
+        is_mjpeg = buf.startswith(b'\xFF\xD8') and b'\xFF\xD9' in buf
+
+        if is_jpeg or is_h264 or is_mjpeg:
             self.buffer.truncate()
             with self.condition:
                 self.frame = self.buffer.getvalue()
