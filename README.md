@@ -1,5 +1,7 @@
 # Universal CCTV: Your Personal Surveillance Revolution
 
+![Home screen of Universal CCTV](./Docs/main.png)
+
 Welcome to *Universal CCTV*, an open-source project that empowers you to effortlessly transform any PC, laptop, or Raspberry Pi with a camera into a sophisticated CCTV IP device, offering seamless streaming and recording capabilities.
 
 ## Features That Redefine Security:
