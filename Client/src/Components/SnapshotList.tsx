@@ -6,15 +6,16 @@ import './SnapshotList.scss';
 import ConfigContext from '../Helpers/ConfigContext';
 import { BuildUrl, FetchData } from '../Helpers/helper';
 import { SocketContext } from '../Helpers/SocketContext';
+import { FileInfo } from '../Resources/interfaces';
 
 const App = () => {
 
     const [element, setElement] = useState<Array<React.ReactElement>>();
-    const [snapshotList, setSnapshotList] = useState<Array<string>>([]); // Set an initial value
+    const [snapshotList, setSnapshotList] = useState<Array<FileInfo>>([]); // Set an initial value
     const { config } = useContext(ConfigContext);
     const { screenshotFiles } = useContext(SocketContext);
 
-    const deleteSnap = (snap: string) => FetchData(config, `/delete/snapshot/${snap}`);
+    const deleteSnap = (uid: number) => FetchData(config, `/delete/snapshot/${uid}`);
 
     useEffect(() => {
         console.log("!>AS>DFAS>DF>ASD>FASDF");
@@ -46,10 +47,10 @@ const App = () => {
 
     useEffect(() => {
         console.log(snapshotList)
-        setElement(snapshotList.slice().sort((a, b) => b.localeCompare(a)).map((name, index) => (
+        setElement(snapshotList.slice().sort((a, b) => b.file_name.localeCompare(a.file_name)).map((name, index) => (
             <div key={index} className={'snapshot'}>
 
-                <div className={'delete-button'} onClick={()=> deleteSnap(name)}>
+                <div className={'delete-button'} onClick={()=> deleteSnap(name.uid)}>
                     <FaTrash/>
                 </div>
 

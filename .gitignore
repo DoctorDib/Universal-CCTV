@@ -1,13 +1,10 @@
 *.xml
 .idea/PiSecurityCamera.iml
 /Client/node_modules
-/video
-/videos
-/thumbnails
-/snapshot
+/Data/*
 
 /__pycache__/*
 
-*.mp4
-*.avi
-*.h264
+/Config/config_custom.json
+
+*.pyc

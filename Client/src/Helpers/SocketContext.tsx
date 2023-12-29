@@ -8,6 +8,7 @@ import React, {
 
 import { io, Socket } from 'socket.io-client';
 import ConfigContext from './ConfigContext';
+import { FileInfo } from '../Resources/interfaces';
   
 interface SocketContextProps {
     children: ReactNode;
@@ -22,9 +23,9 @@ interface SocketContextValue {
 
     servoPosition: number;
     storageUsed: number;
-    videoFiles: Array<string>;
-    screenshotFiles: Array<string>;
-    savedVideoFiles: Array<string>;
+    videoFiles: Array<FileInfo>;
+    screenshotFiles: Array<FileInfo>;
+    savedVideoFiles: Array<FileInfo>;
 
     doAction: (actionName: string) => void;
 }
@@ -38,10 +39,10 @@ export const SocketProvider: React.FC<SocketContextProps> = ({ children }) => {
     const [isRecording, setIsRecording] = useState<boolean>(false);
     const [servoPosition, setServoPosition] = useState<number>(0);
     const [storageUsed, setStorageUsed] = useState<number>(0);
-    const [videoFiles, setVideoFiles] = useState<Array<string>>([]);
-    const [savedVideoFiles, setSavedVideoFiles] = useState<Array<string>>([]);
+    const [videoFiles, setVideoFiles] = useState<Array<FileInfo>>([]);
+    const [savedVideoFiles, setSavedVideoFiles] = useState<Array<FileInfo>>([]);
     const [controlLockState, setControlLockState] = useState<boolean>(false);
-    const [screenshotFiles, setScreenshotFiles] = useState<Array<string>>([]);
+    const [screenshotFiles, setScreenshotFiles] = useState<Array<FileInfo>>([]);
     const { config } = useContext(ConfigContext);
 
     const doAction = (actionName: string) => {
@@ -62,6 +63,7 @@ export const SocketProvider: React.FC<SocketContextProps> = ({ children }) => {
         setSocket(newSocket);
 
         newSocket.on('welcome_package', (data: any): void => {
+            console.log("HERE")
             console.log(data)
             setClientCount(data.clients_count);
             setIsStreaming(data.is_streaming);
@@ -78,9 +80,9 @@ export const SocketProvider: React.FC<SocketContextProps> = ({ children }) => {
         newSocket.on('is_streaming', (data: boolean): void => setIsStreaming(data));
         newSocket.on('servo_position', (data: number): void => setServoPosition(data)); 
         newSocket.on('storage_used', (data: number): void => setStorageUsed(data)); 
-        newSocket.on('video_files', (data: Array<string>): void => setVideoFiles(data)); 
-        newSocket.on('snapshot_files', (data: Array<string>): void => setScreenshotFiles(data)); 
-        newSocket.on('saved_video_files', (data: Array<string>): void => setSavedVideoFiles(data)); 
+        newSocket.on('video_files', (data: Array<FileInfo>): void => setVideoFiles(data)); 
+        newSocket.on('snapshot_files', (data: Array<FileInfo>): void => setScreenshotFiles(data)); 
+        newSocket.on('saved_video_files', (data: Array<FileInfo>): void => setSavedVideoFiles(data)); 
         newSocket.on('control_lock_state', (data: boolean): void => setControlLockState(data));
         
         // Clean up the socket connection on component unmount

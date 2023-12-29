@@ -1,26 +1,23 @@
-from flask import Flask, jsonify, render_template, send_from_directory, send_file, request
+from flask import Flask, jsonify, render_template, send_from_directory, request
 from flask_socketio import SocketIO, emit
 from flask_cors import CORS
-from Info import Info
+from os import listdir, getcwd
+
+import threading
+
+from Resources.Info import Info
+from Resources.SQLiteManager import SQLiteManager
+from Resources.Config import Config
 
 try:
     # Raspberry Pi camera
-    from CameraPi import Camera
-    from Servo import Servo
+    from CameraModules.CameraPi import Camera
+    from Resources.Servo import Servo
     servo_thread : Servo = Servo(11)
 except:
     # Anything else that's not a Raspberry Pi Camera
-    from CameraCv import Camera
+    from CameraModules.CameraCv import Camera
     servo_thread = None
-
-from Config import Config
-
-import os
-import os.path
-from time import sleep
-import threading
-import os
-import shutil
 
 camera_thread : Camera = Camera()
 
@@ -29,11 +26,11 @@ CORS(app, resources={r"/*":{"origins":"*"}})
 socketio = SocketIO(app, cors_allowed_origins="*", async_mode='threading')
 
 react_folder = 'Client'
-directory= f'{os.getcwd()}/{react_folder}/build/static'
+directory= f'{getcwd()}/{react_folder}/build/static'
 
 def start_camera_init_thread(info_instance):
     global camera_init_thread
-    camera_init_thread = threading.Thread(target=camera_thread.initialise_camera, args=(info_instance,))
+    camera_init_thread = threading.Thread(target=camera_thread.initialise_camera, args=(info_instance, config, sqlite_manager))
     camera_init_thread.start()
 
 def start_servo_init_thread():
@@ -93,13 +90,13 @@ def get_snapshot_list():
 
 @app.route('/get/snapshot/<filename>')
 def get_snapshot(filename):
-    path = Config().snapshot_path()
+    path = config.snapshot_path()
     return send_from_directory(path, filename, conditional=True)
 
-@app.route('/delete/snapshot/<filename>')
-def delete_snapshot(filename):
-    camera_thread.delete_snapshot(filename)
-    return response(True, f"Successfully deleted {filename}")
+@app.route('/delete/snapshot/<uid>')
+def delete_snapshot(uid):
+    camera_thread.delete_snapshot(uid)
+    return response(True, f"Successfully deleted {uid}")
 
 # THUMBNAIL
 
@@ -107,16 +104,16 @@ def delete_snapshot(filename):
 def get_thumbnail(filename):
     # removing the format (I only care about the name)
     filename = filename.split('.')[0]
-    path = Config().thumbnail_path()
-    name = f"{filename}.{Config().thumbnail_settings('format')}"
+    path = config.thumbnail_path()
+    name = f"{filename}.{config.thumbnail_settings('format')}"
     return send_from_directory(path, name, conditional=True)
 
 @app.route('/get/savedthumbnail/<filename>')
 def get_saved_thumbnail(filename):
     # removing the format (I only care about the name)
     filename = filename.split('.')[0]
-    path = Config().saved_thumbnail_path()
-    name = f"{filename}.{Config().thumbnail_settings('format')}"
+    path = config.saved_thumbnail_path()
+    name = f"{filename}.{config.thumbnail_settings('format')}"
     return send_from_directory(path, name, conditional=True)
 
 ## SERVO API
@@ -160,26 +157,26 @@ def get_saved_files():
 
 @app.route('/videos')
 def videos_page():
-    output_directory = Config().video_path()
-    file_list = os.listdir(output_directory)
+    output_directory = config.video_path()
+    file_list = listdir(output_directory)
     # return True
     return render_template('./main.html', files=file_list)
 
 @app.route('/savedvideos')
 def saved_videos_page():
-    output_directory = Config().saved_video_path()
-    file_list = os.listdir(output_directory)
+    output_directory = config.saved_video_path()
+    file_list = listdir(output_directory)
     # return True
     return render_template('./main.html', files=file_list)
 
 @app.route('/download/<filename>')
 def download_video(filename):
-    output_directory = Config().video_path()
+    output_directory = config.video_path()
     return send_from_directory(output_directory, filename, as_attachment=True)
 
 @app.route('/video/<filename>')
 def view_video(filename):
-    output_directory = Config().video_path()
+    output_directory = config.video_path()
     return send_from_directory(output_directory, filename, as_attachment=True)
 
 @app.route('/get/disk')
@@ -191,19 +188,19 @@ def get_disk_space():
 @app.route('/')
 def index():
     ''' User will call with with thier id to store the symbol as registered'''
-    path= os.getcwd()+ f'/{react_folder}/build'
+    path= getcwd()+ f'/{react_folder}/build'
     print(path)
     return send_from_directory(directory=path,path='index.html')
 
 @app.route('/<path:filename>')
 def serve_static(filename):
-    path= os.getcwd()+ f'/{react_folder}/build'
+    path= getcwd()+ f'/{react_folder}/build'
     return send_from_directory(path, filename)
                                                                     
 @app.route('/static/<folder>/<file>')
 def css(folder,file):
     ''' User will call with with thier id to store the symbol as registered'''
-    path = folder+'/'+file
+    path = folder + '/' + file
     return send_from_directory(directory=directory,path=path)
 
 # Video feed
@@ -214,26 +211,18 @@ def video_feed():
 
 @app.route('/get/resolution')
 def get_resolution():
-    return Config().video_settings('resolution')
+    return config.video_settings('resolution')
 
 @app.route('/get/framerate')
 def get_framerate():
-    return Config().video_settings('framerate')
+    return config.video_settings('framerate')
 
 # SAVE VIDEOS
-@app.route('/save/video/<filename>')
-def save_video_file(filename):
-    # Video
-    before = Config().build_video_path(filename)
-    after = Config().build_saved_video_path(filename)
-    shutil.copy(before, after)
-
-    # removing the format (I only care about the name)
-    filename = filename.split('.')[0]
-    name = f"{filename}.{Config().thumbnail_settings('format')}"
-    before = Config().build_thumbnail_path(name)
-    after = Config().build_saved_thumbnail_path(name)
-    shutil.copy(before, after)
+@app.route('/save/video/<uid>')
+def save_video_file(uid):
+    sqlite_manager.add_to_favourites(uid)
+    info.socketio.emit('welcome_package', info.welcome_package(), namespace='/')
+    return response(True)
 
 ## WEB SOCKET STUFF
 @socketio.on('connect')
@@ -262,11 +251,13 @@ def _HANDLE_ACTION(action: str):
 
 # Initial start
 if __name__ == '__main__':
-    info: Info = Info(socketio)
+    sqlite_manager: SQLiteManager = SQLiteManager()
+    config: Config = Config()
+    info: Info = Info(socketio, config, sqlite_manager)
 
     start_camera_init_thread(info)
 
-    if (Config().get('use_servo')):
+    if (config.get('use_servo')):
         start_servo_init_thread()
     
     try:

@@ -1,15 +1,17 @@
 import { useContext, useEffect, useRef, useState } from "react";
 import JMuxer from "jmuxer";
 import { BsRewindFill, BsFillFastForwardFill , } from "react-icons/bs";
-import { BiReset, BiStar } from "react-icons/bi";
+import { BiReset, BiStar, BiSolidStar } from "react-icons/bi";
 
 import './VideoPlayer.scss';
 
 import ConfigContext from "../Helpers/ConfigContext";
-import { BuildUrl } from "../Helpers/helper";
+import { BuildUrl, FetchData } from "../Helpers/helper";
+import { FileInfo } from "../Resources/interfaces";
+import { SocketContext } from "../Helpers/SocketContext";
 
 interface VideoPlayerInterface {
-    selectedVideo: string | null,
+    selectedVideo: FileInfo | null,
 }
 
 enum ViewerFormat {
@@ -24,6 +26,7 @@ const VideoPlayer = ({ selectedVideo }: VideoPlayerInterface) => {
     const [key, setKey] = useState<number>(0); // Add key state
     const [format, setFormat] = useState<ViewerFormat>();
     const videoPlayer = useRef(null);
+    const { savedVideoFiles } = useContext(SocketContext);
     const { config, fetchData } = useContext(ConfigContext);
 
     const onIncreasePlayRate = () => {
@@ -32,7 +35,6 @@ const VideoPlayer = ({ selectedVideo }: VideoPlayerInterface) => {
         } else {
             setPlaybackRate(playbackRate + 0.25);
         }
-
     };
     const onResetPlayRate = () => setPlaybackRate(1);
     const onDecreasePlayRate = () => {
@@ -42,20 +44,12 @@ const VideoPlayer = ({ selectedVideo }: VideoPlayerInterface) => {
             setPlaybackRate(playbackRate - 0.25);
         }
     };
-    const OnSaveJob = () => {
-        if (playbackRate < 0.25) {
-            setPlaybackRate(0.25);
-        } else {
-            setPlaybackRate(playbackRate - 0.25);
-        }
 
-        // Fetch('/save/video/')
+    const OnSaveJob = () => {
+        FetchData(config, `/save/video/${selectedVideo.uid}`)
     };
 
     useEffect(() => {
-        
-        console.log(videoPlayer);
-
         if (videoPlayer !== null && videoPlayer.current !== null) {
             videoPlayer.current.playbackRate = playbackRate;
         }
@@ -70,16 +64,16 @@ const VideoPlayer = ({ selectedVideo }: VideoPlayerInterface) => {
             // Resetting playback rate to default
             setPlaybackRate(1);
 
-            if (selectedVideo.includes(ViewerFormat.mp4)) {
+            if (selectedVideo.format === ViewerFormat.mp4) {
                 setFormat(ViewerFormat.mp4);
-            } else if (selectedVideo.includes(ViewerFormat.jpeg)) {
+            } else if (selectedVideo.format === ViewerFormat.jpeg) {
                 setFormat(ViewerFormat.jpeg);
-            } else if (selectedVideo.includes(ViewerFormat.h264)) {
+            } else if (selectedVideo.format === ViewerFormat.h264) {
                 setFormat(ViewerFormat.h264);
             }
 
-            const additionUrl: string = selectedVideo.includes(ViewerFormat.jpeg) ? 'get/snapshot' :  'video';
-            const url: string = BuildUrl(config, `/${additionUrl}/${selectedVideo}`);
+            const additionUrl: string = selectedVideo.format === ViewerFormat.jpeg ? 'get/snapshot' :  'video';
+            const url: string = BuildUrl(config, `/${additionUrl}/${selectedVideo?.file_name}.${selectedVideo?.format}`);
             setVideoUrl(url);
             // Increment key to force remount of the video element
             setKey((prevKey) => prevKey + 1);
@@ -111,7 +105,7 @@ const VideoPlayer = ({ selectedVideo }: VideoPlayerInterface) => {
                     <button title={'Decrease Speed'} onClick={() => onDecreasePlayRate()}> <BsRewindFill/> </button>
                     <button title={'Default Speed'} onClick={() => onResetPlayRate()}> <BiReset/> </button>
                     <button title={'Increase Speed'} onClick={() => onIncreasePlayRate()}> <BsFillFastForwardFill /> </button>
-                    <button title={'Save Video'} onClick={() => OnSaveJob()}> <BiStar /> </button>
+                    <button title={'Save Video'} onClick={() => OnSaveJob()}> { selectedVideo.is_favourite ? <BiSolidStar/> : <BiStar/> }</button>
                 </div>
             </div>
         </div>
@@ -142,7 +136,5 @@ const H246VideoPlayer = ({ url, videoReference }: VideoEnumInterface) => {
         });
     }, [url]);
 
-    return (
-        <video id="h264Stream" className={'video-display'} controls ref={videoReference}></video>
-    );
+    return <video id="h264Stream" className={'video-display'} controls ref={videoReference}></video>
 };

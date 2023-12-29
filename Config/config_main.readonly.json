@@ -1,0 +1,98 @@
+{
+    "version": "3.0",
+    "ip": "",
+    "port": 8000,
+    "location": "London",
+    "solar_depression": "civil",
+    "use_servo": false,
+    
+    "text_settings": {
+        "text_size": 20,
+        "background_color": "black",
+        "text_color": "white"
+    },
+
+    "drive_settings": {
+        "max_videos": 72
+    },
+
+    "video_settings": {
+        "location": "/Data/video",
+        "pi_format": "h264",
+        "cv_format": "mp4",
+        "codec": "avc1",
+        "max_minutes": 15,
+        "resolution": "1440x1080",
+        "framerate": 24,
+        "rotation": 0,
+        "source": 0
+    },
+
+    "snapshot_settings": {
+        "location": "/Data/snapshot",
+        "format": "jpeg"
+    },
+
+    "thumbnail_settings": {
+        "location": "Data/thumbnails",
+        "format": "jpeg"
+    },
+
+    "stream_settings": {
+        "pi_format": "h264",
+        "cv_format": "jpeg"
+    },
+
+    "camera_settings": {
+        "morning": {
+            "resolution": "not_in_use",
+            "framerate": "not_in_use",
+            "awb_mode": "sunlight",
+            "exposure_mode": "auto",
+            "brightness": 50,
+            "contrast": 50,
+            "saturation": -35,
+            "sharpness": 50,
+            "image_effect": "none",
+            "iso": 100,
+            "meter_mode": "average",
+            "video_stabilization": false,
+            "sensor_mode": 0,
+            "rotation": "not_in_use"
+        },
+
+        "day": {
+            "resolution": "not_in_use",
+            "framerate": "not_in_use",
+            "awb_mode": "auto",
+            "exposure_mode": "auto",
+            "brightness": 60,
+            "contrast": 45,
+            "saturation": -35,
+            "sharpness": 50,
+            "image_effect": "none",
+            "iso": 100,
+            "meter_mode": "average",
+            "video_stabilization": false,
+            "sensor_mode": 0,
+            "rotation": "not_in_use"
+        },
+
+        "night": {
+            "resolution": "not_in_use",
+            "framerate": 12,
+            "awb_mode": "auto",
+            "exposure_mode": "night",
+            "brightness": 72,
+            "contrast": 80,
+            "saturation": -35,
+            "sharpness": 50,
+            "image_effect": "none",
+            "iso": 800,
+            "meter_mode": "average",
+            "video_stabilization": false,
+            "sensor_mode": 0,
+            "rotation": "not_in_use"
+        }
+    }
+}

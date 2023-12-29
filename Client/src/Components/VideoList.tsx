@@ -1,5 +1,5 @@
 
-import { useState, useEffect, useContext, ReactComponentElement } from 'react';
+import { useState, useEffect, useContext, } from 'react';
 import { AiOutlineEye, AiOutlinePicture  } from "react-icons/ai";
 import { TfiVideoClapper } from "react-icons/tfi";
 import { FaRegStar } from "react-icons/fa";
@@ -11,10 +11,11 @@ import { BuildUrl, } from '../Helpers/helper';
 import ConfigContext from '../Helpers/ConfigContext';
 import { SocketContext } from '../Helpers/SocketContext';
 import VideoButtonComponent from './VideoButton';
+import { FileInfo } from '../Resources/interfaces';
 
 interface VideoList {
-    setSelectedVideo: (filename: string | null) => void,
-    selectedVideo: string | null,
+    setSelectedVideo: (filename: FileInfo | null) => void,
+    selectedVideo: FileInfo | null,
 }
 
 enum ListNavigation {
@@ -24,7 +25,7 @@ enum ListNavigation {
 }
 
 const App = ({ setSelectedVideo, selectedVideo }: VideoList) => {
-    const [previewSelection, setPreviewSelection] = useState<string | null>(null);
+    const [previewSelection, setPreviewSelection] = useState<FileInfo | null>(null);
     const [imageUrl, setImageUrl] = useState<string>("");
     const [navigation, setNavigation] = useState<ListNavigation>(null);
 
@@ -37,7 +38,7 @@ const App = ({ setSelectedVideo, selectedVideo }: VideoList) => {
                 return;
             }
 
-            const grabList = previewSelection.includes('mp4') ? 'thumbnail' : 'snapshot';
+            const grabList = previewSelection.format === 'mp4' ? 'thumbnail' : 'snapshot';
             setImageUrl(BuildUrl(config, `/get/${grabList}/${previewSelection}`));
         }
         getUrl();
@@ -59,20 +60,18 @@ const App = ({ setSelectedVideo, selectedVideo }: VideoList) => {
             </div>
 
             <div>
-                {
-                    selectedVideo == null 
-                        ? <div className={'camera-preview'}>
-                            <div className={'interactive'} onClick={() => setSelectedVideo(previewSelection)}
-                                style={{ display: previewSelection !== null ? 'flex' : 'none'}}> 
-                                <AiOutlineEye className={'display-eye'}/>
-                            </div>
-                            <img src={imageUrl} className={'camera-display'}/>
+                { selectedVideo == null || previewSelection != selectedVideo
+                ? <div className={'camera-preview'}>
+                    <div className={'interactive'} onClick={() => setSelectedVideo(previewSelection)}
+                        style={{ display: previewSelection !== null ? 'flex' : 'none'}}> 
+                        <AiOutlineEye className={'display-eye'}/>
+                    </div>
+                    <img src={imageUrl} className={'camera-display'}/>
 
-                        </div>
-                        : <div onClick={()=>setSelectedVideo(null)}> 
-                            <LiveFeed ShowControl={false}/> 
-                        </div>
-                }
+                </div>
+                : <div onClick={() => setSelectedVideo(null)}> 
+                    <LiveFeed ShowControl={false}/> 
+                </div> }
             </div>
 
             <div className={'list-content'}>
