@@ -1,39 +1,82 @@
-# NOTE
-This project is under heavy refactoring which means messy commits, and messy coding just to get things working.
+# Universal CCTV: Your Personal Surveillance Revolution
 
-PiSecurityCamera
-======
-One way of protecting my mtorbike from bad drivers or theives!
+Welcome to *Universal CCTV*, an open-source project that empowers you to effortlessly transform any PC, laptop, or Raspberry Pi with a camera into a sophisticated CCTV IP device, offering seamless streaming and recording capabilities.
 
-Why I made it?
-------
-3rd December 2018... the day of the "strong wind". So I was minding my own business, watching Ant man and wasp until suddenly I heard my motion sensor motorbike alarm go off. I decided to look out of my window to find my motorbike balancing on a black BMW. I rushed outside to find my motoribke laying (left side up) on the floor. At the time everything was going fine, he admitted that it was his fault (with a couple of blames here and there), how he tried to shift to the left allowing the 4x4 to squeeze passed on a **SINGLE lane road**.
+## Features That Redefine Security:
+- Record high-quality videos with ease.
+- Stream your camera feed effortlessly over the network.
+- Effortlessly view and manage snapshots and recordings within the client interface.
 
-I recieved an email from my insurance company a couple of days later saying that the **183KG** motorbike **"blew over in adverse weather conditions"** (**12mph wind** at the time).
+*Compatible with*: Windows, Linux, and Raspberry Pi (Pi camera)
 
-I came to the conclusion that I need to make some CCTV for my motorbike, to cover both theft and idiotic drivers.
+## Effortless Setup for Every Device
 
+### Configuring Your Preferences
+Tailoring your preferences is a breeze with *Universal CCTV*. Just follow these steps:
+1. Create a new file named `config_custom.json` in the project directory.
+1. Mimic the structure of `config_main.readonly.json` and include only the fields/items you wish to customize.
 
-What I used
-------
-Hardware:
- - Raspberry Pi 3 b+
- - 30GB SD card
- - Raspberry Pi Camera Module (first version)
- - Raspberry Pi Camera Fish eye Wide Angle Night Vision Camera Module (current version)
+### Raspberry Pi Bliss
+#### Our Recommended and Tested Configuration Formats:
+- Recording: `h264`
+- Streaming: `h264`
+- Thumbnails: `jpeg`
+- Snapshots: `jpeg`
 
-Software: 
- - Raspbian Stretch with desktop
- - Python 3
+### Linux: Overcoming Licensing Hurdles
+Setting up on non-Windows machines may present some challenges due to licensing issues. Dive deeper into this topic [here](https://www.reddit.com/r/davinciresolve/comments/y4ytkl/why_no_mp4h264_support_on_linux/).
 
+To navigate these challenges:
+1. Install the H264 decoder by following these instructions: [Install H264 Decoder on Ubuntu](https://linuxhint.com/install-h264-decoder-ubuntu/)
+1. Install Anaconda on Linux with this guide: [Install Anaconda on Ubuntu](https://phoenixnap.com/kb/how-to-install-anaconda-ubuntu-18-04-or-20-04)
+1. Create a dedicated environment: `conda create --name UniversalCamera python=3`
+1. Activate the environment: `conda activate UniversalCamera`
+1. Install essential pip packages: `pip install -r requirements.txt`
+1. Secure your setup with necessary Conda packages: `conda install --file condapackage.txt`
+Optional:
+1. Elevate your experience with VLC for on-device viewing: `sudo apt-get install vlc`
 
+#### Our Recommended and Tested Configuration Formats:
+- Codec: `avc1`
+- Recording: `mp4`
+- Streaming: `jpeg`
+- Thumbnails: `jpeg`
+- Snapshots: `jpeg`
 
+### Windows: A Seamless Experience
+#### Our Recommended and Tested Configuration Formats:
+- Codec: `avc1`
+- Recording: `mp4`
+- Streaming: `jpeg`
+- Thumbnails: `jpeg`
+- Snapshots: `jpeg`
 
+### Mac: Uncharted Territory
+*Not tested / no support*
 
+# Initiating the Surveillance Symphony
+Initiating the *Universal CCTV* application is a breeze. Simply execute `python main.py` and witness the transformation of your device into a surveillance powerhouse.
 
+## Crafting the Client Experience
+In your terminal, execute `npm run build` to refine the client interface. This step is crucial after any client modifications to ensure a seamlessly integrated and visually appealing user experience.
 
-https://linuxhint.com/install-h264-decoder-ubuntu/
+## Seamless Development Environment
 
+### Server/Python Development
+Immerse yourself in the development process with a simple command: `python main.py` in your terminal.
 
-Make sure the chosen resolution is compatible with your chosen webcam... spent ages figuring out why it silentely fails writing to a file.
-my camera was only compatible for 1440x1080 and not 1920x1080
+### Client Development: The Art of Refinement
+Embark on your client development journey with the following initial setup:
+1. Navigate to the Client directory.
+2. Execute `npm install -d`.
+
+For an immersive development experience:
+1. Open a terminal.
+1. Navigate to the Client directory.
+1. Execute `npm run start`.
+1. Access in web `localhost:3000` 
+*Note*: Be sure to use port `3000` as that is the development site if you wish to see live changes.
+
+*Note*: Before committing any client changes, ensure you run `npm run build` to incorporate the changes into the source control.
+
+Remember to choose a camera resolution compatible with your webcam. I learned the hard way that silent failures in writing to a file can often be traced back to a resolution mismatch. In my case, my camera was only compatible with 1440x1080 and not 1920x1080.
