@@ -121,7 +121,7 @@ class Camera(CameraBase):
         self.start_duration = int(dt.datetime.now().timestamp() * 1000)
 
         # Getting video settings
-        video_format = self.config.video_settings('cv_format')
+        video_format = self.config.video_settings('format')
         framerate = self.config.video_settings('framerate')
         codec = self.config.video_settings('codec')
         
@@ -205,7 +205,7 @@ class Camera(CameraBase):
 
             # Streaming
             if (self.info.is_streaming):
-                format = self.config.stream_settings('cv_format')
+                format = self.config.stream_settings('format')
                 _, encoded_frame = cv2.imencode(f'.{format}', frame)
                 self.output.write(encoded_frame)
 

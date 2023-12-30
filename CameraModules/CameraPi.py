@@ -155,7 +155,7 @@ class Camera(CameraBase):
         self.info.get_snapshot_files()
 
     def _start_streaming(self):
-        stream_format = self.config.stream_settings('pi_format')
+        stream_format = self.config.stream_settings('format')
         self.camera.start_recording(self.output, format=stream_format, splitter_port=2)
 
     # Update _stop_streaming in CameraPi.py
@@ -165,7 +165,7 @@ class Camera(CameraBase):
     # STEP 3
     def _start_recording(self):
         time_stamp = super()._get_timestamp()
-        video_format = self.config.video_settings('pi_format')
+        video_format = self.config.video_settings('format')
         video_path = self.config.build_video_path(f"{time_stamp}.{video_format}")
         self.camera.start_recording(video_path)
         

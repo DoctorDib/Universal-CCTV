@@ -39,7 +39,7 @@ const App = ({ setSelectedVideo, selectedVideo }: VideoList) => {
             }
 
             const grabList = previewSelection.format === 'mp4' ? 'thumbnail' : 'snapshot';
-            setImageUrl(BuildUrl(config, `/get/${grabList}/${previewSelection}`));
+            setImageUrl(BuildUrl(config, `/get/${grabList}/${previewSelection?.file_name}`));
         }
         getUrl();
     }, [previewSelection]);
