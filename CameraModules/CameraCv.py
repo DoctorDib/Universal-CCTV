@@ -29,8 +29,6 @@ class Camera(CameraBase):
     def __init__(self, fixed_mode = False):
         super().__init__(fixed_mode)
 
-        self._start_web_server()
-
     def toggle_recording(self):
         super().toggle_recording()
         if (self.info.is_recording):
@@ -48,7 +46,7 @@ class Camera(CameraBase):
         super()._check_should_tick_status()
         if (self.should_tick is False and (self.info.is_recording or self.info.is_streaming)):
             self.should_tick = True
-            self.initialise_camera(self.info, self.config, self.sqlite_manager)
+            self.initialise_camera()
         elif (self.should_tick is True and (not self.info.is_recording and not self.info.is_streaming)):
             self.should_tick = False
 
@@ -58,12 +56,12 @@ class Camera(CameraBase):
         super()._set_up_camera()
 
     # STEP 2
-    def initialise_camera(self, info: Info, config: Config, sqlite_manager: SQLiteManager):
-        super().initialise_camera(info, config, sqlite_manager)
+    def initialise_camera(self, ):
+        super().initialise_camera()
 
         self._set_up_camera()
 
-        info.lock_controls()
+        self.info.lock_controls()
 
         # Preparing the camera to be used once again
         source = self.config.video_settings('source')
@@ -77,8 +75,6 @@ class Camera(CameraBase):
         # Waiting for camera to initialise
         sleep(2)
         
-        self.info = info
-
         if (self.info.control_lock_state):
             self.info.unlock_controls()
 
@@ -105,7 +101,7 @@ class Camera(CameraBase):
         self._set_up_camera()
         # Giving it time to catch up and set up camera
         sleep(.5)
-        self.initialise_camera(self.info, self.config, self.sqlite_manager)
+        self.initialise_camera()
 
     def snapshot(self, name: str = None, is_thumbnail: bool = False):
         path = super().snapshot(name, is_thumbnail)
