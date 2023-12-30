@@ -28,9 +28,9 @@ socketio = SocketIO(app, cors_allowed_origins="*", async_mode='threading')
 react_folder = 'Client'
 directory= f'{getcwd()}/{react_folder}/build/static'
 
-def start_camera_init_thread(info_instance):
+def start_camera_init_thread(info_instance, config_instance, sqlite_manager_instance):
     global camera_init_thread
-    camera_init_thread = threading.Thread(target=camera_thread.initialise_camera, args=(info_instance, config, sqlite_manager))
+    camera_init_thread = threading.Thread(target=camera_thread.init_thread, args=(info_instance, config_instance, sqlite_manager_instance))
     camera_init_thread.start()
 
 def start_servo_init_thread():
@@ -251,11 +251,11 @@ def _HANDLE_ACTION(action: str):
 
 # Initial start
 if __name__ == '__main__':
-    sqlite_manager: SQLiteManager = SQLiteManager()
     config: Config = Config()
+    sqlite_manager: SQLiteManager = SQLiteManager()
     info: Info = Info(socketio, config, sqlite_manager)
 
-    start_camera_init_thread(info)
+    start_camera_init_thread(info, config, sqlite_manager)
 
     if (config.get('use_servo')):
         start_servo_init_thread()

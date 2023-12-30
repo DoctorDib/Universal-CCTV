@@ -55,6 +55,21 @@ class CameraBase():
             self.selected_setting = self.config.camera_settings(self.selection)
 
     # STEP 2
+            
+    def init_thread(self, info: Info, config: Config, sqlite_manager: SQLiteManager):
+        self.info = info
+        self.config = config
+        self.sqlite_manager = sqlite_manager
+        
+        self.helper = Helper(self.config)
+        self.file_manager = FileManager(self.config)
+
+        version = self.config.get('version')
+        print(f"Initialising {version}")
+
+        self._start_web_server()
+
+        self.initialise_camera()
     
     def toggle_recording(self):
         with self.info.lock:
@@ -69,18 +84,8 @@ class CameraBase():
     def _check_should_tick_status(self):
         pass
 
-    def initialise_camera(self, info: Info, config: Config, sqlite_manager: SQLiteManager):
-        self.info = info
-        self.config = config
-        self.sqlite_manager = sqlite_manager
-        
-        self.helper = Helper(self.config)
-        self.file_manager = FileManager(self.config)
-
-        version = self.config.get('version')
-        print(f"Initialising {version}")
-
-        # self.is_running = True
+    def initialise_camera(self):
+        pass
 
     def shutdown(self):
         self._stop_recording()
