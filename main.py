@@ -91,7 +91,8 @@ def get_snapshot_list():
 @app.route('/get/snapshot/<filename>')
 def get_snapshot(filename):
     path = config.snapshot_path()
-    return send_from_directory(path, filename, conditional=True)
+    name = f"{filename}.{config.snapshot_settings('format')}"
+    return send_from_directory(path, name, conditional=True)
 
 @app.route('/delete/snapshot/<uid>')
 def delete_snapshot(uid):
@@ -103,7 +104,6 @@ def delete_snapshot(uid):
 @app.route('/get/thumbnail/<filename>')
 def get_thumbnail(filename):
     # removing the format (I only care about the name)
-    filename = filename.split('.')[0]
     path = config.thumbnail_path()
     name = f"{filename}.{config.thumbnail_settings('format')}"
     return send_from_directory(path, name, conditional=True)
@@ -111,7 +111,6 @@ def get_thumbnail(filename):
 @app.route('/get/savedthumbnail/<filename>')
 def get_saved_thumbnail(filename):
     # removing the format (I only care about the name)
-    filename = filename.split('.')[0]
     path = config.saved_thumbnail_path()
     name = f"{filename}.{config.thumbnail_settings('format')}"
     return send_from_directory(path, name, conditional=True)
@@ -176,8 +175,9 @@ def download_video(filename):
 
 @app.route('/video/<filename>')
 def view_video(filename):
-    output_directory = config.video_path()
-    return send_from_directory(output_directory, filename, as_attachment=True)
+    path = config.video_path()
+    name = f"{filename}.{config.video_settings('format')}"
+    return send_from_directory(path, name, as_attachment=True)
 
 @app.route('/get/disk')
 def get_disk_space():

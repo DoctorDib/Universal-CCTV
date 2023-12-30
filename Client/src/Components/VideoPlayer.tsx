@@ -73,7 +73,7 @@ const VideoPlayer = ({ selectedVideo }: VideoPlayerInterface) => {
             }
 
             const additionUrl: string = selectedVideo.format === ViewerFormat.jpeg ? 'get/snapshot' :  'video';
-            const url: string = BuildUrl(config, `/${additionUrl}/${selectedVideo?.file_name}.${selectedVideo?.format}`);
+            const url: string = BuildUrl(config, `/${additionUrl}/${selectedVideo?.file_name}`);
             setVideoUrl(url);
             // Increment key to force remount of the video element
             setKey((prevKey) => prevKey + 1);

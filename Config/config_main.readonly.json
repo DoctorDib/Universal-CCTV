@@ -18,8 +18,7 @@
 
     "video_settings": {
         "location": "/Data/video",
-        "pi_format": "h264",
-        "cv_format": "mp4",
+        "format": "mp4",
         "codec": "avc1",
         "max_minutes": 15,
         "resolution": "1440x1080",
@@ -34,13 +33,12 @@
     },
 
     "thumbnail_settings": {
-        "location": "Data/thumbnails",
+        "location": "/Data/thumbnails",
         "format": "jpeg"
     },
 
     "stream_settings": {
-        "pi_format": "h264",
-        "cv_format": "jpeg"
+        "format": "jpeg"
     },
 
     "camera_settings": {

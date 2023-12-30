@@ -59,7 +59,7 @@ class Info():
         self.clients.remove(id)
 
     def get_video_files(self):
-        video_format = self.config.video_settings('cv_format' if self.is_windows else 'pi_format')
+        video_format = self.config.video_settings('format')
         video_files = self.sqlite_manager.get_entries(video_format, is_favourite=False)
         self.socketio.emit('video_files', video_files, namespace='/')
         return video_files
@@ -71,7 +71,7 @@ class Info():
         return snapshot_files
 
     def get_saved_video_files(self):
-        video_format = self.config.video_settings('cv_format' if self.is_windows else 'pi_format')
+        video_format = self.config.video_settings('format')
         video_files = self.sqlite_manager.get_entries(video_format, is_favourite=True)
         self.socketio.emit('saved_video_files', video_files, namespace='/')
         return video_files
